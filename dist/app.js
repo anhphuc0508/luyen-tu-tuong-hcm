@@ -1,274 +1,182 @@
 (() => {
   'use strict';
-  const DATA = window.QUIZ_DATA;
-  const questions = DATA.questions;
-  const byId = new Map(questions.map(q => [q.id, q]));
-  const KEY = 'on-tu-tuong:v1:' + DATA.source.sha256.slice(0, 12);
-  const $ = s => document.querySelector(s);
-  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const $ = selector => document.querySelector(selector);
   const icon = name => `<svg aria-hidden="true"><use href="#i-${name}"/></svg>`;
-  const fresh = () => ({version:1, records:{}, saved:[], completed:0, history:[], active:null, lastResult:null});
-  let state = fresh(), storageOk = true, route = '', timerStart = 0, timerBase = 0;
-  let bankPage = 0, bankQuery = '', bankShowAnswers = false, reviewFilter = 'all';
-  const revealed = new Set();
+  const esc = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  if (!window.QUIZ_DATA?.questions?.length) {
+    $('#main').innerHTML = '<section class="empty card"><h1>Chưa tải được bộ câu hỏi.</h1><p>Hãy kiểm tra kết nối và tải lại trang.</p><button class="btn primary" id="reload">Tải lại trang</button></section>';
+    $('#reload').addEventListener('click',()=>location.reload());
+    return;
+  }
+  const questions = window.QUIZ_DATA.questions;
+  const byId = new Map(questions.map(q => [q.id, q]));
+  $('.skip-link').addEventListener('click',event=>{event.preventDefault();$('#main').focus();$('#main').scrollIntoView();});
+  // Answers exist only in this page's memory; no browser storage or cookies.
+  let exam = null, result = null, route = 'home', submitting = false;
+  let settings = {count:20,minutes:20,shuffle:true};
+  let bankQuery = '', bankPage = 0, showAnswers = false, reviewFilter = 'all', reviewPage = 0;
   let toastTimeout;
-
-  function validSession(s) {
-    return s && Array.isArray(s.ids) && s.ids.length > 0 && s.ids.every(id => byId.has(id)) &&
-      new Set(s.ids).size === s.ids.length && ['practice','exam'].includes(s.mode) &&
-      s.choices && typeof s.choices === 'object' && Object.entries(s.choices).every(([id,a]) => s.ids.includes(Number(id)) && byId.get(Number(id)).options.some(o => o.id === a)) &&
-      Number.isInteger(s.index) && s.index >= 0 && s.index < s.ids.length && Number.isFinite(s.elapsed) && s.elapsed >= 0;
-  }
-  try {
-    const loaded = JSON.parse(localStorage.getItem(KEY));
-    if (loaded?.version === 1 && loaded.records && !Array.isArray(loaded.records)) {
-      state = {...fresh(), ...loaded};
-      state.saved = Array.isArray(state.saved) ? [...new Set(state.saved.filter(id => byId.has(id)))] : [];
-      state.records = Object.fromEntries(Object.entries(state.records).filter(([id,r]) => byId.has(Number(id)) && r && Number.isFinite(r.attempts) && r.attempts > 0 && Number.isFinite(r.correct) && r.correct >= 0 && r.correct <= r.attempts && typeof r.lastCorrect === 'boolean'));
-      state.completed = Math.max(0, Number.isFinite(state.completed) ? state.completed : 0);
-      if (!validSession(state.active)) state.active = null;
-      if (!validSession(state.lastResult)) state.lastResult = null;
-    }
-  } catch { storageOk = false; }
-
-  function persist() {
-    try { localStorage.setItem(KEY, JSON.stringify(state)); }
-    catch { storageOk = false; }
-    updateBadges();
-  }
-  function toast(text) {
-    $('#toast').textContent = text;
-    $('#toast').classList.add('visible');
-    clearTimeout(toastTimeout);
-    toastTimeout = setTimeout(() => $('#toast').classList.remove('visible'), 2800);
-  }
-  function updateBadges() {
-    $('#wrong-count').textContent = wrongIds().length;
-    $('#saved-count').textContent = state.saved.length;
-    $('.nav-count').textContent = questions.length;
-  }
-  const wrongIds = () => questions.filter(q => state.records[q.id]?.lastCorrect === false).map(q => q.id);
-  const isCorrect = (q, choice) => q.correctAnswers.includes(choice);
+  const correct = (q, answer) => q.correctAnswers.includes(answer);
   const formatTime = seconds => {
-    const s = Math.floor(seconds);
-    return (s >= 3600 ? String(Math.floor(s / 3600)).padStart(2,'0') + ':' : '') + String(Math.floor(s / 60) % 60).padStart(2,'0') + ':' + String(s % 60).padStart(2,'0');
+    const s = Math.max(0, Math.floor(seconds));
+    return (s >= 3600 ? String(Math.floor(s / 3600)).padStart(2, '0') + ':' : '') + String(Math.floor(s / 60) % 60).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
   };
-  const pages = q => `Trang ${q.sourcePages.join('–')} · Câu gốc ${q.id}`;
-  function syncElapsed() { if (state.active) state.active.elapsed = timerBase + Math.floor((Date.now() - timerStart) / 1000); }
-  function beginClock() { timerBase = state.active?.elapsed || 0; timerStart = Date.now(); }
-  beginClock();
-  setInterval(() => {
-    if (!state.active) return;
-    syncElapsed();
-    const el = $('#elapsed');
-    if (el) el.textContent = formatTime(state.active.elapsed);
-    if (state.active.elapsed % 10 === 0) persist();
-  }, 1000);
-  window.addEventListener('pagehide', () => { syncElapsed(); persist(); });
-
-  function navigate(target) {
-    if (location.hash.slice(1) === target) render();
-    else location.hash = target;
+  const elapsed = s => Math.max(0, Math.floor(((s.finishedAt || Date.now()) - s.startedAt) / 1000));
+  const remaining = s => s.deadline ? Math.max(0, Math.ceil((s.deadline - Date.now()) / 1000)) : null;
+  const normalize = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase();
+  function toast(message) {
+    $('#toast').textContent = message; $('#toast').classList.add('visible');
+    clearTimeout(toastTimeout); toastTimeout = setTimeout(() => $('#toast').classList.remove('visible'), 3000);
   }
+  function navigate(next) { if (location.hash.slice(1) === next) render(); else location.hash = next; }
   function render() {
     route = location.hash.slice(1) || 'home';
-    if (!['home','bank','wrong','saved','quiz','result'].includes(route)) route = 'home';
-    if (route === 'quiz' && !state.active) route = 'home';
-    if (route === 'result' && !state.lastResult) route = 'home';
-    document.querySelectorAll('[data-nav]').forEach(a => {
-      const active = a.dataset.nav === route || (a.dataset.nav === 'home' && ['quiz','result'].includes(route));
-      a.classList.toggle('active', active);
-      if (active) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current');
+    if (!['home','exam','result','questions'].includes(route)) route = 'home';
+    if (route === 'exam' && !exam) route = 'home';
+    if (route === 'result' && !result) route = 'home';
+    document.body.dataset.page = route;
+    document.querySelectorAll('[data-nav]').forEach(link => {
+      const active = link.dataset.nav === route || (link.dataset.nav === 'home' && ['exam','result'].includes(route));
+      link.classList.toggle('active', active);
+      if (active) link.setAttribute('aria-current', 'page'); else link.removeAttribute('aria-current');
     });
-    if (route === 'home') renderHome();
-    else if (['bank','wrong','saved'].includes(route)) renderBank();
-    else if (route === 'quiz') renderQuiz();
-    else renderResult();
-    if (!storageOk) $('#main').insertAdjacentHTML('afterbegin', '<p class="storage-warning" role="status">Trình duyệt không cho lưu tiến độ. Bạn vẫn có thể luyện trong phiên này; hãy cho phép lưu dữ liệu nếu muốn học tiếp sau khi đóng trang.</p>');
-    updateBadges();
+    document.title = ({home:'Thi trắc nghiệm',exam:'Đang làm bài',result:'Kết quả bài thi',questions:'Bộ 349 câu hỏi'}[route]) + ' · Ôn Tư tưởng';
+    ({home:renderHome,exam:renderExam,result:renderResult,questions:renderBank}[route])();
   }
-
   function renderHome() {
-    const records = Object.values(state.records);
-    const learned = records.length;
-    const attempts = records.reduce((n,r) => n + r.attempts, 0);
-    const accuracy = attempts ? Math.round(records.reduce((n,r) => n + r.correct, 0) / attempts * 100) : null;
-    const percent = Math.round(learned / questions.length * 100);
-    $('#main').innerHTML = `
-      <section class="intro"><div><span class="eyebrow">MỘT GÓC NHỎ, MỘT MỤC TIÊU LỚN</span><h1>Học từng câu.<br><em>Nhớ thật lâu.</em></h1><p>Cùng ôn lại Tư tưởng Hồ Chí Minh theo cách của bạn.<br>Chọn một bài luyện và bắt đầu từ hôm nay.</p></div><div class="source-stamp">${icon('book')}<div><strong>${questions.length}</strong><span>câu hỏi sẵn sàng để luyện</span></div></div></section>
-      ${state.active ? `<div class="resume-banner"><div><h3>Bạn có một bài luyện đang làm</h3><p>${Object.keys(state.active.choices).length}/${state.active.ids.length} câu đã trả lời · ${state.active.mode === 'practice' ? 'Luyện tập' : 'Tự kiểm tra'}</p></div><button class="btn primary" data-action="resume">Học tiếp</button></div>` : ''}
-      <section class="stats" aria-label="Thống kê luyện tập"><div class="stat"><span class="stat-icon">${icon('book')}</span><div><span class="stat-label">Câu hỏi đã luyện</span><strong>${learned}<small>/ ${questions.length} câu</small></strong></div></div><div class="stat"><span class="stat-icon">${icon('check')}</span><div><span class="stat-label">Tỉ lệ trả lời đúng</span><strong>${accuracy === null ? '—' : accuracy + '%'}<small>${attempts ? attempts + ' lượt trả lời' : 'Bắt đầu để xem'}</small></strong></div></div><div class="stat"><span class="stat-icon">${icon('clock')}</span><div><span class="stat-label">Bài đã hoàn thành</span><strong>${state.completed}<small>bài luyện tập</small></strong></div></div></section>
-      <div class="home-grid"><section class="card"><div class="section-title"><h2>Bắt đầu một bài luyện</h2><span>THEO NHỊP CỦA BẠN</span></div><p class="card-subtitle">Một bài ngắn cũng là một bước tiến.</p>
-        <form id="setup-form"><div class="setup-section"><span class="field-label" id="mode-label">Bạn muốn học thế nào?</span><div class="mode-grid" role="radiogroup" aria-labelledby="mode-label"><label class="mode-option"><input type="radio" name="mode" value="practice" checked><span class="mode-content"><span>${icon('book')}Luyện tập</span><small>Xem đáp án ngay sau mỗi câu, học đến đâu nhớ đến đó.</small></span></label><label class="mode-option"><input type="radio" name="mode" value="exam"><span class="mode-content"><span>${icon('clock')}Tự kiểm tra</span><small>Tự làm trọn bài, xem điểm và đáp án khi nộp.</small></span></label></div></div>
-        <div class="field-row setup-section"><label><span class="field-label">Số câu mỗi bài</span><select name="count" id="question-count"><option value="10">10 câu · Khởi động</option><option value="20" selected>20 câu · Vừa đủ</option><option value="30">30 câu · Tập trung</option><option value="50">50 câu · Thử sức</option><option value="all">Tất cả ${questions.length} câu</option></select></label><label><span class="field-label">Chọn câu hỏi</span><select name="pool"><option value="all">Toàn bộ câu hỏi</option><option value="unseen">Câu chưa luyện (${questions.length-learned})</option><option value="wrong">Câu cần ôn lại (${wrongIds().length})</option><option value="saved">Câu đã đánh dấu (${state.saved.length})</option></select></label></div>
-        <div class="setup-controls"><label class="check-label"><input type="checkbox" name="shuffle" checked>Trộn thứ tự câu hỏi</label><span class="card-subtitle">Giữ nguyên thứ tự đáp án A–D</span></div><button class="btn primary full" type="submit">${icon('book')}Bắt đầu luyện tập</button><p class="start-footnote">Không giới hạn thời gian. Tiến độ được lưu tự động.</p></form></section>
-        <aside class="home-side"><section class="card progress-card"><div class="section-title"><h3>Hành trình của bạn</h3>${icon('flower')}</div><div class="progress-visual" style="--progress:${percent}%"><div><strong>${percent}%</strong><span>đã khám phá</span></div></div><p class="progress-summary">${learned ? `Bạn đã luyện ${learned} trong ${questions.length} câu hỏi.` : 'Hành trình bắt đầu từ câu hỏi đầu tiên.'}</p><div class="legend-row"><span><i class="legend-dot"></i>Đã luyện</span><strong>${learned} câu</strong></div><div class="legend-row"><span><i class="legend-dot light"></i>Chưa luyện</span><strong>${questions.length-learned} câu</strong></div></section><div class="study-tip">${icon('repeat')}<div><h3>Một mẹo nhỏ để nhớ lâu</h3><p>Làm lại những câu trả lời sai sau mỗi buổi học. Lặp lại một chút, kiến thức sẽ ở lại lâu hơn.</p></div></div></aside></div>
-      <div class="privacy-note"><span>Dữ liệu học tập lưu trong trình duyệt này, không đồng bộ giữa các thiết bị.</span>${learned || state.saved.length || state.active ? '<button class="text-button" data-action="reset">Xóa tiến độ</button>' : ''}</div>`;
-    $('#setup-form').addEventListener('submit', async e => {
-      e.preventDefault();
-      const form = new FormData(e.currentTarget);
-      const pool = selectPool(form.get('pool'));
-      if (!pool.length) { toast('Nhóm này chưa có câu hỏi. Hãy chọn nhóm khác để bắt đầu.'); return; }
-      if (state.active && !await confirmAction('Bắt đầu bài luyện mới?', 'Bài đang làm sẽ được thay bằng bài mới. Những câu đã luyện ở chế độ Luyện tập vẫn được lưu.', 'Bắt đầu bài mới')) return;
-      startSession(pool, form.get('mode'), form.get('count') === 'all' ? pool.length : Number(form.get('count')), form.has('shuffle'));
+    $('#main').innerHTML = `<section class="home-main"><div class="home-copy"><span class="eyebrow"><span class="tiny-square"></span>TRẮC NGHIỆM TƯ TƯỞNG HỒ CHÍ MINH</span><h1>Vững kiến thức.<br><span>Tự tin làm bài.</span></h1><p class="hero-description">Một bộ câu hỏi, nhiều cách thử sức.<br>Chọn đề, tập trung làm bài và biết ngay<br class="desktop-break"> mình cần ôn thêm điều gì.</p><div class="hero-facts"><span>${icon('check')}Không cần đăng nhập</span><span>${icon('check')}Chấm điểm ngay</span></div><div class="book-scene" aria-hidden="true"><div class="book-shadow"></div><div class="study-book"><div class="book-spine"></div><div class="book-cover"><span class="book-series">TỦ SÁCH ÔN TẬP</span><div class="book-star">✦</div><strong>TƯ TƯỞNG<br>HỒ CHÍ MINH</strong><div class="book-rule"></div><span class="book-subtitle">Hiểu hôm nay.<br>Vững bước ngày mai.</span><span class="book-edition">349 CÂU HỎI TRẮC NGHIỆM</span></div></div><div class="floating-note">${icon('check')}<span>Học một chút.<br><strong>Hiểu thêm nhiều.</strong></span></div><div class="scene-ring"></div></div></div>
+      <div class="setup-column">${exam ? `<div class="resume-notice">${icon('clock')}<span>Bạn đang có một bài thi chưa nộp.</span><button data-action="resume">Làm tiếp</button></div>` : ''}<section class="card setup-card"><div class="setup-heading"><span class="setup-icon">${icon('grid')}</span><div><h2>Tạo bài thi của bạn</h2><p>Chọn mức độ thử sức phù hợp.</p></div></div><form id="exam-setup"><fieldset class="count-field"><legend>Số câu hỏi</legend><div class="count-options">${[10,20,30,50,349].map(n=>`<label><input type="radio" name="count" value="${n}" ${settings.count===n?'checked':''}><span>${n===349?'Tất cả':n}<small>${n===349?'349 câu':'câu'}</small></span></label>`).join('')}</div></fieldset><label class="field-label" for="exam-duration">Thời gian làm bài</label><select id="exam-duration" name="minutes">${[[0,'Không giới hạn'],[10,'10 phút'],[15,'15 phút'],[20,'20 phút'],[30,'30 phút'],[45,'45 phút'],[60,'60 phút']].map(([v,label])=>`<option value="${v}" ${settings.minutes===v?'selected':''}>${label}</option>`).join('')}</select><label class="shuffle-setting"><span class="setting-description">${icon('shuffle')}<span><strong>Trộn thứ tự câu hỏi</strong><small>Một đề mới cho mỗi lần thử sức</small></span></span><span class="switch"><input type="checkbox" name="shuffle" ${settings.shuffle?'checked':''}><span></span></span></label><div class="exam-info">${icon('info')}<p>Mỗi câu có <strong>1 đáp án đúng</strong>. Bạn có thể đổi đáp án trước khi nộp bài.</p></div><button class="btn primary start-button" type="submit">Bắt đầu làm bài${icon('book')}</button><p class="setup-note">Kết quả và đáp án hiển thị sau khi nộp bài.</p></form></section><p class="session-note">Mỗi lần làm bài là một lượt thi mới.<br>Không lưu tiến trình sau khi tải lại hoặc đóng trang.</p></div></section>
+      <section class="how-it-works" aria-label="Ba bước làm bài"><div><span class="step-icon">${icon('grid')}</span><div><h3>Chọn đề phù hợp</h3><p>Từ 10 câu khởi động đến trọn bộ 349 câu.</p></div></div><div><span class="step-icon">${icon('clock')}</span><div><h3>Làm bài theo nhịp của bạn</h3><p>Có đồng hồ, chuyển câu và đánh dấu xem lại.</p></div></div><div><span class="step-icon">${icon('check')}</span><div><h3>Biết điểm, hiểu đáp án</h3><p>Xem lại từng câu để ôn tập hiệu quả hơn.</p></div></div></section>`;
+    $('#exam-setup').addEventListener('submit', async event => {
+      event.preventDefault();
+      const form = new FormData(event.currentTarget);
+      settings = {count:Number(form.get('count')),minutes:Number(form.get('minutes')),shuffle:form.has('shuffle')};
+      if (exam && !await confirm('Tạo bài thi mới?', 'Bài đang làm sẽ được thay bằng đề mới. Các đáp án chưa nộp sẽ không được giữ lại.', 'Tạo đề mới')) return;
+      startExam();
     });
   }
-
-  function selectPool(pool) {
-    if (pool === 'wrong') return wrongIds();
-    if (pool === 'saved') return [...state.saved];
-    if (pool === 'unseen') return questions.filter(q => !state.records[q.id]).map(q => q.id);
-    return questions.map(q => q.id);
+  function startExam(ids) {
+    let pool = ids ? [...ids] : questions.map(q => q.id);
+    if (!ids && settings.shuffle) for (let i=pool.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+    pool = ids ? pool : pool.slice(0, settings.count);
+    const now = Date.now();
+    exam = {ids:pool,choices:{},flags:[],index:0,startedAt:now,deadline:settings.minutes ? now+settings.minutes*60000 : null};
+    result = null; submitting = false;
+    navigate('exam'); window.scrollTo(0,0);
   }
-  function startSession(pool, mode, count, shuffled) {
-    const ids = [...pool];
-    if (shuffled) for (let i=ids.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [ids[i],ids[j]]=[ids[j],ids[i]]; }
-    state.active = {ids:ids.slice(0,count), mode, choices:{}, graded:[], index:0, elapsed:0, startedAt:new Date().toISOString()};
-    beginClock(); persist(); navigate('quiz'); window.scrollTo({top:0,behavior:'instant'});
-  }
-  function recordAnswer(id, correct) {
-    const prev = state.records[id] || {attempts:0,correct:0};
-    state.records[id] = {attempts:prev.attempts+1,correct:prev.correct+(correct?1:0),lastCorrect:correct};
-  }
-  function saveQuestion(id) {
-    if (state.saved.includes(id)) state.saved=state.saved.filter(n=>n!==id); else state.saved.push(id);
-    persist();
-    document.querySelectorAll(`[data-action="save"][data-id="${id}"]`).forEach(b => {
-      const saved = state.saved.includes(id);
-      b.classList.toggle('saved',saved); b.setAttribute('aria-pressed',String(saved));
-      b.setAttribute('aria-label',saved?'Bỏ đánh dấu câu '+id:'Đánh dấu câu '+id);
-      b.title=saved?'Bỏ đánh dấu':'Đánh dấu để ôn sau';
-    });
-    if (route === 'saved') renderBank();
-  }
-  function saveButton(q) {
-    const saved = state.saved.includes(q.id);
-    return `<button class="icon-button ${saved?'saved':''}" data-action="save" data-id="${q.id}" aria-pressed="${saved}" aria-label="${saved?'Bỏ đánh dấu':'Đánh dấu'} câu ${q.id}" title="${saved?'Bỏ đánh dấu':'Đánh dấu để ôn sau'}">${icon('star')}</button>`;
-  }
-
-  function renderQuiz() {
-    const s = state.active, q = byId.get(s.ids[s.index]), choice = s.choices[q.id];
-    const reveal = s.mode === 'practice' && !!choice;
-    const count = Object.keys(s.choices).length;
-    const correct = isCorrect(q,choice);
-    $('#main').innerHTML = `<div class="quiz-heading"><div><span class="eyebrow">TỪNG CÂU MỘT, BẠN ĐANG TIẾN BỘ</span><h1>${s.mode === 'practice' ? 'Luyện tập' : 'Tự kiểm tra'} <span style="color:var(--muted);font-weight:400">· ${s.ids.length} câu</span></h1></div><span class="timer">${icon('clock')}<span id="elapsed">${formatTime(s.elapsed)}</span></span></div><div class="quiz-layout"><section><div class="card question-card"><div class="question-meta"><strong>Câu ${s.index+1}<span style="font-weight:400;color:var(--muted)"> / ${s.ids.length}</span></strong><span>${pages(q)}</span>${saveButton(q)}</div><h2 class="question-text" id="question-title">${esc(q.question)}</h2><div class="options" role="group" aria-labelledby="question-title">${q.options.map(o => `<button class="option ${o.id===choice?'selected':''} ${reveal&&isCorrect(q,o.id)?'is-correct':''} ${reveal&&o.id===choice&&!correct?'is-wrong':''}" data-action="answer" data-answer="${o.id}" aria-pressed="${o.id===choice}" ${reveal?'disabled':''}><span class="option-letter">${o.id}</span><span>${esc(o.text)}</span>${reveal&&isCorrect(q,o.id)?icon('check'):''}</button>`).join('')}</div>${reveal?`<div class="feedback ${correct?'':'wrong'}" role="status"><strong>${correct?'Chính xác! Bạn đã nhớ câu này.':'Chưa chính xác. Đáp án theo tài liệu là '+q.correctAnswers.join(', ')+'.'}</strong><small>Đáp án được đánh dấu đỏ trong Scribd.pdf · ${pages(q)}.</small></div>`:''}<div class="question-footer"><button class="btn secondary" data-action="previous" ${s.index===0?'disabled':''}>Câu trước</button><div>${s.index<s.ids.length-1?'<button class="btn primary" data-action="next">Câu tiếp theo</button>':'<button class="btn primary" data-action="finish">Hoàn thành bài</button>'}</div></div></div><p class="key-hint">Dùng phím <kbd>1</kbd>–<kbd>4</kbd> chọn đáp án · <kbd>←</kbd> <kbd>→</kbd> chuyển câu</p></section><aside class="card nav-card"><h3>Tiến độ bài luyện</h3><p>${count}/${s.ids.length} câu đã trả lời</p><div class="quiz-progress"><span style="width:${count/s.ids.length*100}%"></span></div><div class="question-grid" aria-label="Chọn câu hỏi">${s.ids.map((id,i)=>{const a=s.choices[id];return `<button class="${i===s.index?'current':''} ${a?(s.mode==='practice'?(isCorrect(byId.get(id),a)?'correct':'wrong'):'answered'):''}" data-action="jump" data-index="${i}" aria-label="Câu ${i+1}${a?', đã trả lời':''}" ${i===s.index?'aria-current="step"':''}>${i+1}</button>`;}).join('')}</div><p class="nav-help">${s.mode==='practice'?'Xanh: đúng · Đỏ: cần ôn lại.':'Các câu đã chọn được tô màu.'}<br>Bạn có thể chọn số để chuyển câu.</p><button class="btn secondary full" data-action="finish">${s.mode==='exam'?'Nộp bài kiểm tra':'Kết thúc bài luyện'}</button></aside></div>`;
+  function renderExam() {
+    const q = byId.get(exam.ids[exam.index]);
+    const answered = Object.keys(exam.choices).length;
+    const timeLeft = remaining(exam);
+    $('#main').innerHTML = `<div class="exam-heading"><div><span class="eyebrow">BÀI THI TRẮC NGHIỆM</span><h1>Tư tưởng Hồ Chí Minh</h1><p>${exam.ids.length} câu hỏi <span>·</span> Mỗi câu chọn một đáp án</p></div><button class="btn secondary" data-action="submit">Nộp bài</button></div><div class="exam-layout"><section class="card question-card"><div class="question-topline"><span class="question-number">Câu ${exam.index+1}<small> / ${exam.ids.length}</small></span><button class="flag-button ${exam.flags.includes(q.id)?'flagged':''}" data-action="flag" aria-pressed="${exam.flags.includes(q.id)}">${icon('flag')}<span>${exam.flags.includes(q.id)?'Đã đánh dấu':'Đánh dấu xem lại'}</span></button></div><h2 class="question-text" id="question-title">${esc(q.question)}</h2><div class="answers" role="group" aria-labelledby="question-title">${q.options.map(o=>`<button class="answer ${exam.choices[q.id]===o.id?'selected':''}" data-action="answer" data-answer="${o.id}" aria-pressed="${exam.choices[q.id]===o.id}"><span class="answer-letter">${o.id}</span><span>${esc(o.text)}</span><span class="answer-radio">${exam.choices[q.id]===o.id?icon('check'):''}</span></button>`).join('')}</div><div class="question-bottom"><button class="btn secondary" data-action="previous" ${exam.index===0?'disabled':''}>Câu trước</button><span class="question-caption">${exam.choices[q.id]?'Đã chọn đáp án '+exam.choices[q.id]:'Chưa chọn đáp án'}</span>${exam.index<exam.ids.length-1?'<button class="btn primary" data-action="next">Câu tiếp theo</button>':'<button class="btn primary" data-action="submit">Kiểm tra & nộp bài</button>'}</div><p class="keyboard-hint">Phím <kbd>1</kbd>–<kbd>4</kbd> chọn A–D <span>·</span> <kbd>←</kbd> <kbd>→</kbd> chuyển câu</p></section><aside class="exam-aside"><section class="card exam-tracker"><div class="timer-label">${icon('clock')}${exam.deadline?'Thời gian còn lại':'Thời gian làm bài'}</div><strong class="timer ${timeLeft!==null&&timeLeft<=60?'urgent':''}" id="timer">${formatTime(timeLeft===null?elapsed(exam):timeLeft)}</strong><div class="tracker-progress"><span>Đã trả lời <strong>${answered}/${exam.ids.length}</strong></span><div class="progress-track"><span style="width:${answered/exam.ids.length*100}%"></span></div></div><div class="question-grid" aria-label="Chuyển đến câu hỏi">${exam.ids.map((id,index)=>`<button class="${exam.choices[id]?'answered':''} ${exam.flags.includes(id)?'flagged':''} ${index===exam.index?'current':''}" data-action="jump" data-index="${index}" aria-label="Câu ${index+1}${exam.choices[id]?', đã trả lời':''}${exam.flags.includes(id)?', đã đánh dấu':''}" ${index===exam.index?'aria-current="step"':''}>${index+1}</button>`).join('')}</div><div class="grid-legend"><span><i class="legend-box answered"></i>Đã trả lời</span><span><i class="legend-box"></i>Chưa trả lời</span><span><i class="legend-box flagged"></i>Đánh dấu</span></div><button class="btn primary full" data-action="submit">Nộp bài thi</button></section><p class="aside-note">${icon('info')}<span>${exam.deadline?'Bài sẽ tự nộp khi hết giờ.':'Bạn chủ động nộp khi hoàn thành.'} Đáp án chưa được hiển thị trong lúc thi.</span></p></aside></div>`;
   }
   function choose(answer) {
-    if (!state.active || route !== 'quiz') return;
-    const s=state.active, q=byId.get(s.ids[s.index]);
-    if (!q.options.some(o=>o.id===answer) || (s.mode==='practice' && s.choices[q.id])) return;
-    s.choices[q.id]=answer;
-    if (s.mode==='practice') { recordAnswer(q.id,isCorrect(q,answer)); s.graded ||= []; s.graded.push(q.id); }
-    syncElapsed();persist();renderQuiz();
+    if (!exam || submitting) return;
+    if (exam.deadline && Date.now()>=exam.deadline) { submitExam(true); return; }
+    const q = byId.get(exam.ids[exam.index]);
+    if (!q.options.some(o => o.id===answer)) return;
+    exam.choices[q.id] = answer; renderExam();
   }
   function move(index) {
-    const s=state.active;
-    if (!s || index<0 || index>=s.ids.length) return;
-    s.index=index;syncElapsed();persist();renderQuiz();
+    if (!exam || index<0 || index>=exam.ids.length) return;
+    exam.index=index; renderExam();
+    if (innerWidth<=760) window.scrollTo({top:0,behavior:'instant'});
   }
-  async function finish() {
-    const s=state.active;
-    if (!s) return;
-    const unanswered=s.ids.filter(id=>!s.choices[id]).length;
-    const text=unanswered?`Bạn còn ${unanswered} câu chưa trả lời. Những câu này sẽ được tính là chưa đúng và đưa vào mục cần ôn lại.`:'Bạn đã trả lời tất cả câu hỏi. Nộp bài để xem điểm và ôn lại đáp án.';
-    if (!await confirmAction('Hoàn thành bài luyện?',text,'Nộp và xem kết quả')) return;
-    syncElapsed();
-    for (const id of s.ids) if (!(s.graded||[]).includes(id)) recordAnswer(id,isCorrect(byId.get(id),s.choices[id]));
-    state.lastResult=JSON.parse(JSON.stringify(s));
-    state.lastResult.finishedAt=new Date().toISOString();
-    const correct=s.ids.filter(id=>isCorrect(byId.get(id),s.choices[id])).length;
-    state.completed++;
-    state.history = [{date:state.lastResult.finishedAt,correct,total:s.ids.length,elapsed:s.elapsed},...(Array.isArray(state.history)?state.history:[])].slice(0,50);
-    state.active=null;reviewFilter='all';persist();navigate('result');window.scrollTo({top:0,behavior:'instant'});
+  async function submitExam(automatic=false) {
+    if (!exam || submitting) return;
+    if (!automatic) {
+      const unanswered = exam.ids.length-Object.keys(exam.choices).length;
+      const ok = await confirm('Nộp bài thi?', unanswered ? `Bạn còn ${unanswered} câu chưa trả lời. Câu bỏ trống sẽ không được tính điểm. Bạn vẫn muốn nộp bài?` : 'Bạn đã trả lời tất cả câu hỏi. Nộp bài để xem điểm và đáp án.', 'Nộp bài & xem điểm');
+      if (!ok || !exam) return;
+    }
+    submitting = true;
+    if ($('#dialog').open) $('#dialog').close('cancel');
+    result = {...exam,finishedAt:exam.deadline ? Math.min(Date.now(),exam.deadline) : Date.now(),timedOut:automatic};
+    exam = null; reviewFilter = 'all'; reviewPage = 0;
+    navigate('result'); window.scrollTo(0,0);
+    if (automatic) toast('Đã hết giờ. Bài thi của bạn đã được nộp tự động.');
   }
-
+  setInterval(() => {
+    if (!exam) return;
+    const timeLeft=remaining(exam),node=$('#timer');
+    if (node) { node.textContent=formatTime(timeLeft===null?elapsed(exam):timeLeft); node.classList.toggle('urgent',timeLeft!==null&&timeLeft<=60); }
+    if (timeLeft===0) submitExam(true);
+  },250);
+  document.addEventListener('visibilitychange',()=>{if(exam?.deadline&&Date.now()>=exam.deadline)submitExam(true);});
+  window.addEventListener('beforeunload',event=>{if(exam){event.preventDefault();event.returnValue='';}});
   function renderResult() {
-    const s=state.lastResult;
-    const correct=s.ids.filter(id=>isCorrect(byId.get(id),s.choices[id])).length;
-    const unanswered=s.ids.filter(id=>!s.choices[id]).length;
-    const wrong=s.ids.length-correct-unanswered;
-    const percent=Math.round(correct/s.ids.length*100);
-    const needsReview=s.ids.filter(id=>!isCorrect(byId.get(id),s.choices[id]));
-    $('#main').innerHTML=`<section class="card result-hero"><span class="eyebrow">THÊM MỘT BƯỚC TRÊN HÀNH TRÌNH HỌC</span><h1>${percent===100?'Trọn vẹn một bài luyện!':percent>=70?'Bạn đang làm rất tốt!':'Mỗi lần luyện là một lần nhớ hơn.'}</h1><div class="result-circle"><strong>${percent}%</strong><small>${correct}/${s.ids.length} câu đúng</small></div><p>${needsReview.length?`Còn ${needsReview.length} câu để cùng ôn lại. Bạn có thể luyện riêng những câu này.`:'Bạn đã trả lời đúng toàn bộ. Hãy thử thêm những câu khác để củng cố kiến thức.'}</p><div class="result-stats"><div><strong style="color:var(--green)">${correct}</strong><span>Trả lời đúng</span></div><div><strong style="color:var(--red)">${wrong}</strong><span>Trả lời sai</span></div><div><strong>${unanswered}</strong><span>Chưa trả lời</span></div><div><strong style="font-size:1.25rem">${formatTime(s.elapsed)}</strong><span>Thời gian làm bài</span></div></div><div class="result-actions">${needsReview.length?'<button class="btn primary" data-action="retry-wrong">'+icon('repeat')+'Luyện lại câu chưa đúng</button>':''}<button class="btn secondary" data-action="retry-all">Làm lại bài này</button><a class="btn secondary" href="#home">Về tổng quan</a></div></section><div class="review-header"><h2>Xem lại bài vừa làm</h2><label><span class="sr-only">Lọc câu hỏi trong kết quả</span><select id="review-filter"><option value="all" ${reviewFilter==='all'?'selected':''}>Tất cả câu hỏi</option><option value="wrong" ${reviewFilter==='wrong'?'selected':''}>Sai hoặc chưa làm</option><option value="correct" ${reviewFilter==='correct'?'selected':''}>Trả lời đúng</option></select></label></div><div class="bank-list" id="review-list">${s.ids.filter(id=>reviewFilter==='all'||(reviewFilter==='correct'?isCorrect(byId.get(id),s.choices[id]):!isCorrect(byId.get(id),s.choices[id]))).map(id=>{
-      const q=byId.get(id),a=s.choices[id],ok=isCorrect(q,a);
-      return `<article class="card bank-card"><div class="bank-meta"><span>CÂU ${q.id}</span><span class="review-status ${ok?'':'wrong'}">${ok?'Đúng':a?'Sai':'Chưa trả lời'}</span><span>${pages(q)}</span></div><h3 class="bank-question">${esc(q.question)}</h3><div class="bank-options">${q.options.map(o=>`<div class="bank-option ${isCorrect(q,o.id)?'correct':''}"><b>${o.id}.</b><span>${esc(o.text)}</span>${o.id===a?'<span class="selected-mark">Bạn chọn</span>':''}${isCorrect(q,o.id)?icon('check'):''}</div>`).join('')}</div><div class="bank-footer"><span class="card-subtitle">Đáp án theo PDF: ${q.correctAnswers.join(', ')}</span>${saveButton(q)}</div></article>`;
-    }).join('')||'<div class="card empty-state"><h3>Không có câu hỏi trong nhóm này.</h3></div>'}</div>`;
-    $('#review-filter').addEventListener('change',e=>{reviewFilter=e.target.value;renderResult();});
+    const total = result.ids.length;
+    const right = result.ids.filter(id=>correct(byId.get(id),result.choices[id])).length;
+    const empty = result.ids.filter(id=>!result.choices[id]).length;
+    const score = (right/total*10).toLocaleString('vi-VN',{maximumFractionDigits:1});
+    $('#main').innerHTML = `<section class="card result-summary"><div class="result-copy"><span class="eyebrow">${result.timedOut?'ĐÃ HẾT THỜI GIAN LÀM BÀI':'BẠN ĐÃ HOÀN THÀNH'}</span><h1>Bài thi đã hoàn thành.</h1><p>Mỗi lần làm bài là một lần hiểu thêm.<br>Cùng xem lại kết quả và những câu cần ôn nhé.</p><div class="result-actions"><button class="btn primary" data-action="new">Tạo đề mới</button><button class="btn secondary" data-action="retry">${icon('refresh')}Làm lại đề này</button></div></div><div class="score-ring" style="--score:${right/total*100}%"><div><strong>${score}<small>/10</small></strong><span>ĐIỂM BÀI THI</span></div></div></section><section class="result-stats" aria-label="Chi tiết kết quả"><div><span class="result-stat-icon green">${icon('check')}</span><div><strong>${right}<small>/${total}</small></strong><span>Trả lời đúng</span></div></div><div><span class="result-stat-icon red">×</span><div><strong>${total-right-empty}</strong><span>Trả lời sai</span></div></div><div><span class="result-stat-icon gray">—</span><div><strong>${empty}</strong><span>Chưa trả lời</span></div></div><div><span class="result-stat-icon amber">${icon('clock')}</span><div><strong class="time-stat">${formatTime(elapsed(result))}</strong><span>Thời gian làm bài</span></div></div></section><div class="review-heading"><div><span class="eyebrow">HIỂU THÊM SAU MỖI LẦN THỬ</span><h2>Xem lại đáp án</h2></div><label><span class="sr-only">Lọc câu hỏi trong kết quả</span><select id="review-filter">${[['all','Tất cả câu hỏi'],['incorrect','Sai hoặc bỏ trống'],['correct','Trả lời đúng'],['empty','Chưa trả lời']].map(([value,label])=>`<option value="${value}" ${reviewFilter===value?'selected':''}>${label}</option>`).join('')}</select></label></div><div id="review-list" class="question-list"></div><div id="review-pager"></div><p class="result-note">Kết quả chỉ hiển thị trong lượt làm bài này. Tải lại trang sẽ bắt đầu một lượt mới.</p>`;
+    $('#review-filter').addEventListener('change',event=>{reviewFilter=event.target.value;reviewPage=0;renderReview();});
+    renderReview();
   }
-
+  function questionCard(q, index, reveal=false, answer=null, reviewing=false) {
+    const ok = correct(q,answer);
+    return `<article class="card bank-card"><div class="bank-meta"><span>Câu ${index}</span>${reviewing?`<span class="status ${ok?'correct':answer?'incorrect':'empty'}">${ok?'Trả lời đúng':answer?'Trả lời sai':'Chưa trả lời'}</span>`:`<span>Tư tưởng Hồ Chí Minh</span>`}</div><h3>${esc(q.question)}</h3><div class="review-options">${q.options.map(o=>`<div class="review-option ${reveal&&correct(q,o.id)?'correct':''} ${reviewing&&answer===o.id&&!ok?'incorrect':''}"><b>${o.id}</b><span>${esc(o.text)}</span>${reveal&&correct(q,o.id)?icon('check'):''}${reviewing&&o.id===answer?'<small>Bạn chọn</small>':''}</div>`).join('')}</div>${reveal?`<p class="source-note">Đáp án: <strong>${q.correctAnswers.join(', ')}</strong> <span>·</span> Câu ${q.id}, trang ${q.sourcePages.join('–')} trong tài liệu.</p>`:''}</article>`;
+  }
+  function pager(page,total,kind) {
+    if (total<=1) return '';
+    return `<div class="pager"><button class="btn secondary" data-action="${kind}-previous" ${page===0?'disabled':''}>Trang trước</button><span>Trang ${page+1} / ${total}</span><button class="btn secondary" data-action="${kind}-next" ${page>=total-1?'disabled':''}>Trang sau</button></div>`;
+  }
+  function renderReview() {
+    const ids=result.ids.filter(id=>reviewFilter==='all'||(reviewFilter==='correct'?correct(byId.get(id),result.choices[id]):reviewFilter==='empty'?!result.choices[id]:!correct(byId.get(id),result.choices[id])));
+    const totalPages=Math.max(1,Math.ceil(ids.length/10));
+    reviewPage=Math.max(0,Math.min(reviewPage,totalPages-1));
+    $('#review-list').innerHTML=ids.slice(reviewPage*10,reviewPage*10+10).map(id=>questionCard(byId.get(id),result.ids.indexOf(id)+1,true,result.choices[id],true)).join('')||'<div class="card empty"><h3>Không có câu hỏi trong nhóm này.</h3><p>Chọn một bộ lọc khác để xem lại bài thi.</p></div>';
+    $('#review-pager').innerHTML=pager(reviewPage,totalPages,'review');
+  }
   function renderBank() {
-    const map={bank:['Ngân hàng câu hỏi','Toàn bộ câu hỏi trong tài liệu. Tra cứu, xem đáp án và đánh dấu những câu muốn ôn.','all'],wrong:['Câu cần ôn lại','Những câu bạn trả lời sai hoặc bỏ trống ở lần gần nhất. Làm đúng để đưa câu ra khỏi danh sách này.','wrong'],saved:['Câu đã đánh dấu','Gom những câu cần ghi nhớ vào một chỗ và luyện lại bất cứ lúc nào.','saved']};
-    const [title,desc,pool]=map[route];
-    const ids=selectPool(pool);
-    $('#main').innerHTML=`<div class="page-heading"><span class="eyebrow">HỌC THEO CÁCH CỦA BẠN</span><h1>${title}</h1><p>${desc}</p></div>${ids.length?`<div class="bank-toolbar"><label class="search-wrap"><span class="sr-only">Tìm theo nội dung hoặc số câu</span>${icon('search')}<input id="bank-search" type="search" placeholder="Tìm theo nội dung hoặc số câu…" value="${esc(bankQuery)}"></label><label class="check-label"><input type="checkbox" id="show-all" ${bankShowAnswers?'checked':''}>Hiện đáp án</label><button class="btn primary" data-action="practice-pool" data-pool="${pool}">${icon('book')}Luyện ${ids.length} câu này</button></div><p id="search-count" class="card-subtitle" style="margin-bottom:16px" role="status"></p><div class="bank-list" id="bank-list"></div><div id="bank-pager"></div>`:`<section class="card empty-state">${icon(route==='saved'?'star':'check')}<h2>${route==='saved'?'Bạn chưa đánh dấu câu nào.':'Chưa có câu nào cần ôn lại.'}</h2><p>${route==='saved'?'Bấm biểu tượng ngôi sao bên cạnh câu hỏi để lưu vào đây.':'Bắt đầu một bài luyện. Những câu chưa đúng sẽ xuất hiện ở đây để bạn dễ ôn tập.'}</p><a class="btn primary" href="#${route==='saved'?'bank':'home'}">${route==='saved'?'Khám phá câu hỏi':'Bắt đầu luyện tập'}</a></section>`}`;
-    if (!ids.length) return;
-    $('#bank-search').addEventListener('input',e=>{bankQuery=e.target.value;bankPage=0;renderBankItems();});
-    $('#show-all').addEventListener('change',e=>{bankShowAnswers=e.target.checked;renderBankItems();});
+    $('#main').innerHTML=`<div class="page-heading"><span class="eyebrow">HỆ THỐNG LẠI KIẾN THỨC</span><h1>Bộ câu hỏi ôn tập</h1><p>${questions.length} câu hỏi trắc nghiệm Tư tưởng Hồ Chí Minh, có đáp án để đối chiếu.</p></div><div class="bank-toolbar"><label class="search-input">${icon('search')}<span class="sr-only">Tìm câu hỏi theo nội dung hoặc số câu</span><input type="search" id="bank-search" placeholder="Tìm nội dung hoặc số câu…" value="${esc(bankQuery)}"></label><label class="checkbox-label"><input type="checkbox" id="show-answers" ${showAnswers?'checked':''}>Hiện đáp án</label></div><p class="search-count" id="search-count" role="status"></p><div id="bank-list" class="question-list"></div><div id="bank-pager"></div>`;
+    $('#bank-search').addEventListener('input',event=>{bankQuery=event.target.value;bankPage=0;renderBankItems();});
+    $('#show-answers').addEventListener('change',event=>{showAnswers=event.target.checked;renderBankItems();});
     renderBankItems();
   }
-  const normalize = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase();
-  function filteredBank() {
-    const ids=selectPool(route==='wrong'?'wrong':route==='saved'?'saved':'all');
-    const term=normalize(bankQuery.trim());
-    return ids.map(id=>byId.get(id)).filter(q=>!term||String(q.id)===term||normalize(q.question+' '+q.options.map(o=>o.text).join(' ')).includes(term));
-  }
   function renderBankItems() {
-    if (!$('#bank-list')) return;
-    const list=filteredBank(),pageSize=12,totalPages=Math.max(1,Math.ceil(list.length/pageSize));
+    const term=normalize(bankQuery.trim());
+    const list=questions.filter(q=>!term||String(q.id)===term||normalize(q.question+' '+q.options.map(o=>o.text).join(' ')).includes(term));
+    const totalPages=Math.max(1,Math.ceil(list.length/12));
     bankPage=Math.max(0,Math.min(bankPage,totalPages-1));
-    $('#search-count').textContent=`${list.length} câu hỏi${bankQuery?' phù hợp':''} · Đáp án theo dấu đỏ trong tài liệu gốc`;
-    $('#bank-list').innerHTML=list.slice(bankPage*pageSize,(bankPage+1)*pageSize).map(q=>{
-      const show=bankShowAnswers||revealed.has(q.id);
-      return `<article class="card bank-card"><div class="bank-meta"><span>CÂU ${q.id}</span><span>${pages(q)}</span></div><h2 class="bank-question">${esc(q.question)}</h2><div class="bank-options">${q.options.map(o=>`<div class="bank-option ${show&&isCorrect(q,o.id)?'correct':''}"><b>${o.id}.</b><span>${esc(o.text)}</span>${show&&isCorrect(q,o.id)?icon('check'):''}</div>`).join('')}</div><div class="bank-footer"><button class="btn ghost answer-toggle" data-action="reveal" data-id="${q.id}">${show?'Đáp án: '+q.correctAnswers.join(', '):'Xem đáp án'}</button><div class="bank-actions"><button class="btn secondary" data-action="single" data-id="${q.id}">Luyện câu này</button>${saveButton(q)}</div></div></article>`;
-    }).join('')||`<div class="card empty-state">${icon('search')}<h3>Chưa tìm thấy câu hỏi phù hợp.</h3><p>Thử một từ khóa ngắn hơn hoặc nhập số câu trong tài liệu.</p></div>`;
-    $('#bank-pager').innerHTML=totalPages>1?`<div class="pager"><button class="btn secondary" data-action="bank-prev" ${bankPage===0?'disabled':''}>Trang trước</button><span>${bankPage+1} / ${totalPages}</span><button class="btn secondary" data-action="bank-next" ${bankPage===totalPages-1?'disabled':''}>Trang sau</button></div>`:'';
+    $('#search-count').textContent=`${list.length} câu hỏi${term?' phù hợp':''}`;
+    $('#bank-list').innerHTML=list.slice(bankPage*12,bankPage*12+12).map(q=>questionCard(q,q.id,showAnswers)).join('')||'<div class="card empty"><h3>Chưa tìm thấy câu hỏi.</h3><p>Thử một từ khóa ngắn hơn hoặc tìm theo số câu.</p></div>';
+    $('#bank-pager').innerHTML=pager(bankPage,totalPages,'bank');
   }
-
-  function confirmAction(title,text,label) {
-    const dialog=$('#confirm-dialog');
+  function openDialog(title,content,confirmText='Đã hiểu',cancelText=null) {
+    const dialog=$('#dialog');
     if (dialog.open) return Promise.resolve(false);
-    $('#dialog-title').textContent=title;$('#dialog-text').textContent=text;$('#dialog-confirm').textContent=label;
-    dialog.returnValue='cancel';dialog.showModal();
+    $('#dialog-title').textContent=title; $('#dialog-content').innerHTML=content;
+    $('#dialog-confirm').textContent=confirmText;
+    $('#dialog-cancel').hidden=!cancelText; $('#dialog-cancel').textContent=cancelText||'Quay lại';
+    dialog.returnValue='cancel'; dialog.showModal();
     return new Promise(resolve=>dialog.addEventListener('close',()=>resolve(dialog.returnValue==='confirm'),{once:true}));
   }
-  async function launchPool(ids) {
-    if (!ids.length) return;
-    if (state.active && !await confirmAction('Bắt đầu bài luyện mới?','Bài đang làm sẽ được thay bằng bài mới. Tiến độ luyện tập đã ghi nhận vẫn được giữ.','Bắt đầu bài mới')) return;
-    startSession(ids,'practice',ids.length,true);
-  }
-  document.addEventListener('click',async e=>{
-    const b=e.target.closest('[data-action]');if(!b||b.disabled)return;
-    const action=b.dataset.action,id=Number(b.dataset.id);
-    if(action==='resume')navigate('quiz');
-    else if(action==='answer')choose(b.dataset.answer);
-    else if(action==='previous')move(state.active.index-1);
-    else if(action==='next')move(state.active.index+1);
-    else if(action==='jump')move(Number(b.dataset.index));
-    else if(action==='finish')await finish();
-    else if(action==='save')saveQuestion(id);
-    else if(action==='retry-wrong')await launchPool(state.lastResult.ids.filter(n=>!isCorrect(byId.get(n),state.lastResult.choices[n])));
-    else if(action==='retry-all')await launchPool(state.lastResult.ids);
-    else if(action==='single')await launchPool([id]);
-    else if(action==='practice-pool')await launchPool(selectPool(b.dataset.pool));
-    else if(action==='reveal'){if(revealed.has(id))revealed.delete(id);else revealed.add(id);renderBankItems();}
-    else if(action==='bank-prev'||action==='bank-next'){bankPage+=action==='bank-prev'?-1:1;renderBankItems();$('#bank-search')?.scrollIntoView({block:'start'});}
-    else if(action==='reset'){
-      if(await confirmAction('Xóa toàn bộ tiến độ?','Số câu đã luyện, bài đang làm, kết quả và câu đánh dấu trong trình duyệt này sẽ được xóa. Ngân hàng câu hỏi vẫn sẵn sàng để bạn bắt đầu lại.','Xóa tiến độ')){state=fresh();persist();render();toast('Đã xóa tiến độ. Bạn có thể bắt đầu lại.');}
-    }
+  function confirm(title,text,label) { return openDialog(title,`<p>${esc(text)}</p>`,label,'Làm tiếp'); }
+  document.addEventListener('click',async event=>{
+    const button=event.target.closest('[data-action]');
+    if (!button || button.disabled) return;
+    const action=button.dataset.action;
+    if(action==='answer')choose(button.dataset.answer);
+    else if(action==='next')move(exam.index+1);
+    else if(action==='previous')move(exam.index-1);
+    else if(action==='jump')move(Number(button.dataset.index));
+    else if(action==='submit')await submitExam();
+    else if(action==='flag'&&exam){const id=exam.ids[exam.index];exam.flags=exam.flags.includes(id)?exam.flags.filter(n=>n!==id):[...exam.flags,id];renderExam();}
+    else if(action==='resume')navigate('exam');
+    else if(action==='new'){result=null;submitting=false;navigate('home');}
+    else if(action==='retry')startExam(result.ids);
+    else if(action==='bank-next'||action==='bank-previous'){bankPage+=action==='bank-next'?1:-1;renderBankItems();$('.bank-toolbar').scrollIntoView({block:'start'});}
+    else if(action==='review-next'||action==='review-previous'){reviewPage+=action==='review-next'?1:-1;renderReview();$('.review-heading').scrollIntoView({block:'start'});}
+    else if(action==='guide')await openDialog('Một bài thi, ba bước đơn giản',`<ol class="guide-list"><li><strong>Chọn đề</strong><p>Chọn số câu, thời gian và bật trộn câu hỏi nếu muốn đề ngẫu nhiên.</p></li><li><strong>Làm bài</strong><p>Chọn một đáp án A–D cho mỗi câu. Có thể đổi lựa chọn, chuyển câu hoặc đánh dấu để xem lại.</p></li><li><strong>Nộp và xem kết quả</strong><p>Nhấn Nộp bài để biết điểm và xem đáp án. Nếu có giới hạn thời gian, bài tự nộp khi hết giờ.</p></li></ol><p class="dialog-note">Không cần tài khoản. Không lưu tiến trình sau khi tải lại hoặc đóng trang.</p>`);
+    else if(action==='about')await openDialog('Về bộ câu hỏi',`<p>Bộ đề gồm <strong>${questions.length} câu hỏi</strong> Tư tưởng Hồ Chí Minh, trích từ tài liệu ôn tập 57 trang.</p><p>Nội dung và đáp án giữ theo phần đánh dấu trong tài liệu nguồn. Khi xem kết quả, mỗi câu có số câu và trang nguồn để đối chiếu.</p><p>Câu hỏi được trộn; thứ tự A–D được giữ nguyên vì một số đáp án tham chiếu các lựa chọn khác.</p>`);
   });
-  document.addEventListener('keydown',e=>{
-    if(route!=='quiz'||!state.active||$('#confirm-dialog').open||e.ctrlKey||e.altKey||e.metaKey||e.target.closest('input,select,textarea,[contenteditable="true"]'))return;
-    if(['1','2','3','4'].includes(e.key)){e.preventDefault();choose('ABCD'[Number(e.key)-1]);}
-    else if(e.key==='ArrowRight'){e.preventDefault();move(state.active.index+1);}
-    else if(e.key==='ArrowLeft'){e.preventDefault();move(state.active.index-1);}
+  document.addEventListener('keydown',event=>{
+    if(route!=='exam'||!exam||$('#dialog').open||event.ctrlKey||event.altKey||event.metaKey||event.target.closest('input,select,textarea,[contenteditable="true"]'))return;
+    if(['1','2','3','4'].includes(event.key)){event.preventDefault();choose('ABCD'[Number(event.key)-1]);}
+    else if(event.key==='ArrowLeft'){event.preventDefault();move(exam.index-1);}
+    else if(event.key==='ArrowRight'){event.preventDefault();move(exam.index+1);}
   });
-  window.addEventListener('hashchange',()=>{bankPage=0;bankQuery='';render();window.scrollTo({top:0,behavior:'instant'});});
-  $('#download-json').addEventListener('click',e=>{
-    e.preventDefault();
-    const blob=new Blob([JSON.stringify(DATA,null,2)+'\n'],{type:'application/json;charset=utf-8'});
-    const url=URL.createObjectURL(blob),link=document.createElement('a');
-    link.href=url;link.download='Scribd.json';link.click();
-    setTimeout(()=>URL.revokeObjectURL(url),10000);
-  });
+  window.addEventListener('hashchange',()=>{render();window.scrollTo(0,0);});
   render();
 })();

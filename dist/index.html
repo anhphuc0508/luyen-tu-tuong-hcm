@@ -2,48 +2,45 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#92343e">
-  <meta name="description" content="Luyện 349 câu trắc nghiệm Tư tưởng Hồ Chí Minh, chấm điểm và ôn lại câu sai từ tài liệu của bạn.">
-  <title>Ôn Tư tưởng · Góc học tập của bạn</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173d35">
+  <meta name="description" content="Thi thử trắc nghiệm Tư tưởng Hồ Chí Minh với 349 câu hỏi. Tạo đề ngẫu nhiên, làm bài có thời gian, chấm điểm và xem đáp án ngay. Không cần đăng nhập.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Ôn Tư tưởng · Trắc nghiệm Tư tưởng Hồ Chí Minh">
+  <meta property="og:description" content="349 câu hỏi. Tạo đề, làm bài và xem điểm ngay. Miễn phí, không cần đăng nhập.">
+  <meta property="og:url" content="https://luyentthcm.vercel.app/">
+  <meta property="og:image" content="https://luyentthcm.vercel.app/social-card.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <link rel="canonical" href="https://luyentthcm.vercel.app/">
+  <title>Ôn Tư tưởng · Trắc nghiệm Tư tưởng Hồ Chí Minh</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
   <script defer src="questions.js"></script>
   <script defer src="app.js"></script>
 </head>
 <body>
+  <a class="skip-link" href="#main">Đến nội dung chính</a>
   <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
     <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 5c-3-2-6-2-9-1v15c3-1 6-1 9 1m0-15c3-2 6-2 9-1v15c-3-1-6-1-9 1V5Z"/></symbol>
-    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
-    <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M4 9a8 8 0 0 1 14-3l3 3m0-6v6h-6M20 15a8 8 0 0 1-14 3l-3-3m0 6v-6h6"/></symbol>
-    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
     <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
-    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H5v18h14V8l-5-5Zm0 0v6h5M8 13h8m-8 4h6"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4c5-4 9 4 14 0v10c-5 4-9-4-14 0"/></symbol>
     <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></symbol>
-    <symbol id="i-flower" viewBox="0 0 24 24"><path d="M12 21C3 19 2 13 3 9c4 0 7 3 9 7 2-4 5-7 9-7 1 4 0 10-9 12Zm0-5C7 12 8 7 12 3c4 4 5 9 0 13Z"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 8a9 9 0 1 0 1 7M20 3v6h-6"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M3 5h3c5 0 7 14 12 14h3M3 19h3c5 0 7-14 12-14h3m-4-3 4 3-4 3m0 8 4 3-4 3"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.1"/></symbol>
   </defs></svg>
-  <div class="app-shell">
-    <aside class="sidebar">
-      <a class="brand" href="#home"><span class="brand-icon"><svg><use href="#i-book"/></svg></span><span>Ôn Tư tưởng<small>GÓC HỌC TẬP CỦA BẠN</small></span></a>
-      <div class="nav-label">KHÔNG GIAN HỌC TẬP</div>
-      <nav aria-label="Điều hướng chính">
-        <a href="#home" data-nav="home"><svg><use href="#i-grid"/></svg>Tổng quan</a>
-        <a href="#bank" data-nav="bank"><svg><use href="#i-book"/></svg>Ngân hàng câu hỏi<span class="nav-count">349</span></a>
-        <a href="#wrong" data-nav="wrong"><svg><use href="#i-repeat"/></svg>Câu cần ôn lại<span id="wrong-count" class="nav-count">0</span></a>
-        <a href="#saved" data-nav="saved"><svg><use href="#i-star"/></svg>Câu đã đánh dấu<span id="saved-count" class="nav-count">0</span></a>
-      </nav>
-      <div class="sidebar-note"><span class="note-icon"><svg><use href="#i-flower"/></svg></span><p>Mỗi lần luyện tập,<br>thêm một lần ghi nhớ.</p><small>Cứ học theo nhịp của bạn.</small></div>
-      <div class="sidebar-bottom"><svg><use href="#i-file"/></svg><div>Tài liệu của bạn<small>Scribd.pdf · 57 trang</small></div><a id="download-json" href="questions.json" download title="Tải dữ liệu JSON" aria-label="Tải dữ liệu JSON">JSON</a></div>
-    </aside>
-    <div class="workspace">
-      <header class="topbar"><div><span class="topbar-dot"></span>TƯ TƯỞNG HỒ CHÍ MINH</div><span class="local-badge"><span></span>Tiến độ lưu trên máy</span></header>
-      <main id="main" tabindex="-1"></main>
-      <footer>Ôn tập theo tài liệu của bạn <span>•</span> Đáp án theo phần bôi đỏ trong PDF gốc.</footer>
-    </div>
-  </div>
-  <dialog id="confirm-dialog"><form method="dialog"><span class="eyebrow">BÀI LUYỆN CỦA BẠN</span><h2 id="dialog-title"></h2><p id="dialog-text"></p><div class="dialog-actions"><button class="btn secondary" value="cancel">Quay lại</button><button class="btn primary" value="confirm" id="dialog-confirm">Xác nhận</button></div></form></dialog>
+  <header class="site-header"><div class="header-inner">
+    <a class="brand" href="#home" aria-label="Ôn Tư tưởng, trang chủ"><span class="brand-icon"><svg><use href="#i-book"/></svg></span><span>Ôn Tư tưởng<small>HỌC CHỦ ĐỘNG · THI TỰ TIN</small></span></a>
+    <nav aria-label="Điều hướng chính"><a href="#home" data-nav="home">Thi trắc nghiệm</a><a href="#questions" data-nav="questions">Bộ câu hỏi</a><button type="button" data-action="guide">Hướng dẫn</button></nav>
+    <span class="header-badge">349 câu hỏi <span>·</span> Miễn phí</span>
+  </div></header>
+  <main id="main" tabindex="-1"><div class="loading"><svg><use href="#i-book"/></svg><p>Đang chuẩn bị bộ câu hỏi…</p></div></main>
+  <footer class="site-footer"><div class="footer-inner"><div class="footer-brand"><svg><use href="#i-book"/></svg><span>Ôn Tư tưởng</span><span class="footer-subject">Tư tưởng Hồ Chí Minh</span></div><div class="footer-links"><button data-action="about">Thông tin bộ câu hỏi</button><span>Học tập miễn phí, không cần tài khoản.</span></div></div></footer>
+  <dialog id="dialog"><form method="dialog"><span class="eyebrow" id="dialog-eyebrow">ÔN TƯ TƯỞNG</span><h2 id="dialog-title"></h2><div id="dialog-content"></div><div class="dialog-actions"><button class="btn secondary" value="cancel" id="dialog-cancel">Quay lại</button><button class="btn primary" value="confirm" id="dialog-confirm">Xác nhận</button></div></form></dialog>
   <div id="toast" role="status" aria-live="polite"></div>
-  <noscript>Vui lòng bật JavaScript để sử dụng trang trắc nghiệm.</noscript>
+  <noscript><div class="noscript">Bạn cần bật JavaScript để làm bài trắc nghiệm.</div></noscript>
 </body>
 </html>
