@@ -9151,7 +9151,7 @@
       "id": 216,
       "chapterId": 3,
       "number": 50,
-      "question": "",
+      "question": "Theo Hồ Chí Minh trong thời kỳ quá độ còn tồn tại hình thức...",
       "options": [
         {
           "id": "A",
@@ -9910,7 +9910,7 @@
         },
         {
           "id": "D",
-          "text": ""
+          "text": "Thương nghiệp"
         }
       ],
       "sourceFile": "chương 3.pdf",
@@ -9921,7 +9921,7 @@
         "startY": 23617.0,
         "endY": 23804.0
       },
-      "correctAnswers": [],
+      "correctAnswers": ["B"],
       "answerEvidence": {
         "method": "visible_answer_label",
         "y": null
@@ -12211,11 +12211,11 @@
         },
         {
           "id": "C",
-          "text": ""
+          "text": "Quá độ trực tiếp"
         },
         {
           "id": "D",
-          "text": ""
+          "text": "Quá độ nhảy vọt"
         }
       ],
       "sourceFile": "chương 3.pdf",
@@ -12936,7 +12936,7 @@
         },
         {
           "id": "B",
-          "text": ""
+          "text": "Có lợi tập thể."
         },
         {
           "id": "C",
