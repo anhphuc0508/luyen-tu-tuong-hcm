@@ -8,7 +8,9 @@ Web tại https://luyentthcm.vercel.app/ dùng bộ mới từ **chương 1.pdf 
 
 PDF là ảnh chụp dài, có quảng cáo đè chữ, đoạn ghép ảnh mất nội dung và khung chưa tải chữ. OCR thực hiện cục bộ bằng PyMuPDF/Tesseract tiếng Việt; các vùng khó đọc được đối chiếu với ảnh. Đáp án theo nhãn đỏ “Đáp án đúng” trong file mới. Không lấy đáp án cũ điền vào chỗ thiếu. Các thay đổi chuẩn hoá chữ đọc được lưu tại `data/lms/ocr-normalizations.json`; bản chép tay đã xem ảnh nằm tại `data/lms/manual_fixes.py`.
 
-430 câu đủ dữ liệu để luyện; 92 câu chờ bổ sung. Chỉ `status: ready` được chọn vào lượt ôn/thi. `needs_review` vẫn xuất hiện trong bộ câu hỏi với phần thiếu ghi rõ; `correctAnswers: []` khi chưa đọc được đáp án. Lựa chọn bị mất giữ chuỗi rỗng. Tên file, trang nguồn, tọa độ dọc ảnh và SHA-256 của 6 PDF được lưu để đối chiếu. Hồ sơ nhập ban đầu: `data/lms/source-audit.json`.
+488 câu đủ dữ liệu để luyện; 34 câu chờ bổ sung. Chỉ `status: ready` được chọn vào lượt ôn/thi. `needs_review` vẫn xuất hiện trong bộ câu hỏi với phần thiếu ghi rõ; `correctAnswers: []` khi chưa đọc được đáp án. Lựa chọn bị mất giữ chuỗi rỗng. Tên file, trang nguồn, tọa độ dọc ảnh và SHA-256 của 6 PDF được lưu để đối chiếu. Hồ sơ nhập ban đầu: `data/lms/source-audit.json`.
+
+Ngày 23/11/2026, chương 1 và 6 được thay bằng hai bản chụp Azota mới (người dùng đã đổi tên thành `chương 1.pdf` và `chương 6.pdf`). Giữ thứ tự câu và lựa chọn theo từng bản mới, không chuyển chữ đáp án theo số câu cũ. Chương 1 có 92/95 câu sẵn sàng; câu 53 thiếu D, câu 57 thiếu nội dung hỏi, câu 87 thiếu C/D ở đoạn nối ảnh. Chương 6 đủ 76/76 câu. Riêng chương 1 câu 65 bị cắt nhãn đáp án: đã đối chiếu trùng toàn bộ câu hỏi và bốn lựa chọn với câu 42 trong bản PDF chương 1 trước, rồi đổi chữ đáp án theo nội dung lựa chọn (C cũ thành A mới). Lịch sử nguồn, SHA-256, tọa độ và các chỉnh sửa OCR: `data/lms/source-update-2026-11-23.json`. Các chương 2–5 giữ nguyên.
 
 `dist/can-bo-sung.txt` là danh sách dễ đọc; `dist/mau-bo-sung.json` là mẫu điền các trường còn thiếu. Cả hai có liên kết trong web. Khi bổ sung, sửa `dist/questions.json`, lưu nguồn xác nhận trong `answerEvidence`, xoá đúng các mục đã xử lý trong `issues`, rồi chạy `python scripts/sync_lms.py` để cập nhật dữ liệu trình duyệt, số lượng và danh sách thiếu. Giữ các mục `issues` chưa xử lý.
 
@@ -22,6 +24,6 @@ Không dùng tài khoản, cookie, localStorage hoặc sessionStorage. Lượt l
 
 `python scripts/verify_lms.py --sources D:/Downloads` kiểm tra đủ 522 vị trí gốc, trạng thái, nguồn/SHA-256, JSON/JS đồng nhất và mẫu bổ sung. Bỏ `--sources` khi không có PDF trên máy.
 
-`python scripts/qa_exam.py [URL]` dùng Playwright/Chrome kiểm tra 430 câu luyện theo chương, 92 câu chờ bổ sung, hiện đáp án sai, chấm điểm, đổi lựa chọn, trộn câu, tự nộp, tìm kiếm, phân trang, tải lại không lưu và giao diện điện thoại. Thư viện kiểm tra nằm trong `.qa-tools`; kết quả gần nhất nằm trong `.qa-results`. Hai thư mục này được ẩn và không đưa lên GitHub.
+`python scripts/qa_exam.py [URL]` dùng Playwright/Chrome kiểm tra toàn bộ câu luyện theo chương, các câu chờ bổ sung, hiện đáp án sai, chấm điểm, đổi lựa chọn, trộn câu, tự nộp, tìm kiếm, phân trang, tải lại không lưu và giao diện điện thoại. Thư viện kiểm tra nằm trong `.qa-tools`; kết quả gần nhất nằm trong `.qa-results`. Hai thư mục này được ẩn và không đưa lên GitHub.
 
-Các script cho bộ đề cũ đã chuyển vào `../LUU_TRU_CU/scripts-cu`. Thư mục `scripts` chỉ còn `sync_lms.py`, `verify_lms.py` và `qa_exam.py` cho bộ mới.
+Thư mục `scripts` gồm `sync_lms.py`, `verify_lms.py` và `qa_exam.py` cho bộ hiện tại.

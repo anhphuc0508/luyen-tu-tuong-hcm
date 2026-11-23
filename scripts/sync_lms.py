@@ -32,8 +32,9 @@ def sync():
            f"Tổng: {len(questions)} vị trí câu hỏi; {data['readyQuestions']} câu sẵn sàng luyện; {data['pendingQuestions']} câu cần bổ sung.",
            'Số câu là số in trong từng PDF, không phải vị trí câu hỏi sau khi trộn.',
            'Chương 1 là file có đầu đề Tổng hợp LMS.',
-           'Các chỗ chưa rõ giữ trống; không lấy đáp án bộ cũ điền vào.',
-           'Bạn có thể gửi lại theo mẫu: Chương 1 câu 2: đáp án C; Chương 6 câu 4: lựa chọn D = ...','']
+           'Chương 1 và chương 6 đã cập nhật theo bản chụp Azota mới ngày 23/11/2026; số câu theo bản mới.',
+           'Các chỗ chưa rõ giữ trống; chỉ bổ sung khi có nguồn xác nhận cùng câu và cùng lựa chọn.',
+           'Bạn có thể gửi lại theo mẫu: Chương 1 câu 53: lựa chọn D = ...; Chương 1 câu 57: câu hỏi = ...','']
     template=[]
     for c in data['chapters']:
         pending=[q for q in questions if q['chapterId']==c['id'] and q['issues']]

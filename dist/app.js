@@ -32,7 +32,7 @@
   const chapterPool = id => id === 'all' ? questions : questions.filter(q => q.chapterId === Number(id));
   const scopeTitle = id => id === 'all' ? `Tất cả ${chapters.length} chương` : `Chương ${id}`;
   const sourceLabel = q => `Chương ${q.chapterId} · Câu ${q.number}`;
-  const evidenceLabel = q => q.answerEvidence?.method === 'matching_new_source' ? 'Đáp án đối chiếu câu trùng trong bộ mới' : 'Đáp án hiển thị trong PDF';
+  const evidenceLabel = q => ({ matching_new_source: 'Đáp án đối chiếu câu trùng trong bộ mới', matching_previous_source: 'Đáp án đối chiếu cùng câu trong bản PDF trước' }[q.answerEvidence?.method] || 'Đáp án hiển thị trong PDF');
   function chapterOptions(selected) {
     return `<option value="all" ${selected === 'all' ? 'selected' : ''}>Tất cả ${chapters.length} chương</option>` + chapters.map(c => `<option value="${c.id}" ${String(selected) === String(c.id) ? 'selected' : ''}>Chương ${c.id}</option>`).join('');
   }
