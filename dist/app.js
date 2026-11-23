@@ -72,7 +72,7 @@
         <label class="shuffle-setting"><span class="setting-description">${icon('shuffle')}<span><strong>Trộn thứ tự câu hỏi</strong><small>Tắt để ôn theo thứ tự trong tài liệu</small></span></span><span class="switch"><input type="checkbox" name="shuffle" ${settings.shuffle ? 'checked' : ''}><span></span></span></label>
         <div class="exam-info">${icon('info')}<p>${practice ? 'Đáp án hiện ngay sau khi chọn. Mỗi câu ghi nhận <strong>lần chọn đầu tiên</strong>.' : 'Mỗi câu có <strong>1 đáp án đúng</strong>. Bạn có thể đổi đáp án trước khi nộp bài.'}</p></div>
         <button class="btn primary start-button" type="submit">${practice ? 'Bắt đầu ôn tập' : 'Bắt đầu làm bài'}${icon(practice ? 'book' : 'clock')}</button><p class="setup-note">${practice ? 'Chọn sai sẽ hiện rõ đáp án đúng để bạn ghi nhớ.' : 'Kết quả và đáp án hiển thị sau khi nộp bài.'}</p>
-      </form></section><p class="session-note">Không cần tài khoản.<br>Không lưu tiến trình sau khi tải lại hoặc đóng trang.</p></div></section>
+      </form></section></div></section>
       <section class="how-it-works" aria-label="Các cách ôn tập"><div><span class="step-icon">${icon('grid')}</span><div><h3>Ôn đúng chương cần học</h3><p>Chọn một trong ${chapters.length} chương hoặc ôn toàn bộ ${questions.length} câu.</p></div></div><div><span class="step-icon">${icon('book')}</span><div><h3>Sai ở đâu, biết ngay ở đó</h3><p>Chế độ Ôn tập hiện đáp án ngay sau mỗi lần chọn.</p></div></div><div><span class="step-icon">${icon('clock')}</span><div><h3>Tự kiểm tra kiến thức</h3><p>Thi thử có thời gian, chấm điểm sau khi nộp bài.</p></div></div></section>`;
     function readForm() {
       const form = new FormData($('#exam-setup'));
