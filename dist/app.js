@@ -72,7 +72,7 @@
         <div class="exam-info">${icon('info')}<p>${practice ? 'Đáp án hiện ngay sau khi chọn. Mỗi câu ghi nhận <strong>lần chọn đầu tiên</strong>.' : 'Mỗi câu có <strong>1 đáp án đúng</strong>. Bạn có thể đổi đáp án trước khi nộp bài.'}</p></div>
         <button class="btn primary start-button" type="submit">${practice ? 'Bắt đầu ôn tập' : 'Bắt đầu làm bài'}${icon(practice ? 'book' : 'clock')}</button>
       </form></section></div></section>
-      <section class="how-it-works" aria-label="Các cách ôn tập"><div><span class="step-icon">${icon('grid')}</span><div><h3>Ôn đúng chương cần học</h3><p>Chọn một trong ${chapters.length} chương hoặc ôn toàn bộ ${questions.length} câu.</p></div></div><div><span class="step-icon">${icon('book')}</span><div><h3>Sai ở đâu, biết ngay ở đó</h3><p>Chế độ Ôn tập hiện đáp án ngay sau mỗi lần chọn.</p></div></div><div><span class="step-icon">${icon('clock')}</span><div><h3>Tự kiểm tra kiến thức</h3><p>Thi thử có thời gian, chấm điểm sau khi nộp bài.</p></div></div></section>`;
+      `;
     function readForm() {
       const form = new FormData($('#exam-setup'));
       settings = { mode: form.get('mode'), chapterId: form.get('chapter'), count: form.get('count') === 'all' ? 'all' : Number(form.get('count')), minutes: Number(form.get('minutes') || 0), shuffle: form.has('shuffle') };
