@@ -1,5 +1,7 @@
 (() => {
   'use strict';
+  // Initialize the Analytics queue here to keep the page free of inline scripts.
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
   const $ = selector => document.querySelector(selector);
   const icon = name => `<svg aria-hidden="true"><use href="#i-${name}"/></svg>`;
   const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
