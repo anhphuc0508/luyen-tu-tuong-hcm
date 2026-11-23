@@ -86,6 +86,10 @@ try:
         assert '349' not in page.locator('body').inner_text()
         assert page.evaluate('window.QUIZ_DATA.source.files.length') == 6
         assert page.evaluate('window.QUIZ_DATA.questions.length') == TOTAL
+        assert page.locator('header [data-nav=questions]').count() == 0
+        page.locator('header [data-action=guide]').click()
+        expect(page.locator('#dialog')).to_be_visible()
+        page.locator('#dialog-confirm').click()
         page.screenshot(path=str(OUT / 'desktop-home.png'), full_page=True)
         record(f'New {TOTAL}-question bank, six chapters, {READY_COUNT} ready and practice as the default')
 
@@ -192,7 +196,7 @@ try:
         assert context.cookies() == []
         record('Shuffled chapter exam has unique questions; exam allows changes, hides keys until submission and scores correctly')
 
-        page.locator('[data-nav=questions]').click()
+        page.goto(URL+'#questions')
         expect(page.locator('body')).to_have_attribute('data-page','questions')
         expect(page.locator('#bank-list .bank-card')).to_have_count(12)
         page.locator('#bank-chapter').select_option('4')
