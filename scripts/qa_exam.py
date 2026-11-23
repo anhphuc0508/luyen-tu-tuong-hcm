@@ -122,7 +122,7 @@ try:
         assert page.locator('#review-list .bank-card').count() == 9
         page.locator('#review-filter').select_option('correct')
         assert page.locator('#review-list .bank-card').count() == 1
-        assert 'Chương 1' in page.locator('.source-note').inner_text()
+        assert page.locator('.source-note').inner_text() == 'Đáp án: '+second['correctAnswers'][0]
         page.locator('[data-action=retry]').click()
         assert current(page)['id'] == q['id']
         assert page.locator('.answer.selected').count() == 0
@@ -130,7 +130,7 @@ try:
         expect(page.locator('.answer-feedback.incorrect')).to_be_visible()
         home(page)
         assert page.locator('.resume-notice').count() == 0
-        record('Practice scoring, result filters, chapter provenance, retry and reload reset')
+        record('Practice scoring, result filters, answer keys, retry and reload reset')
 
         # Walk every question in each selected chapter; IDs must never cross chapters.
         visited = []
@@ -210,7 +210,7 @@ try:
         assert page.locator('.review-option.correct').count() == 0
         page.locator('#show-answers').check()
         assert page.locator('.review-option.correct').count() == 1
-        assert 'Chương 6' in page.locator('.source-note').inner_text()
+        assert page.locator('.source-note').inner_text() == 'Đáp án: '+QUESTIONS[TOTAL]['correctAnswers'][0]
         page.screenshot(path=str(OUT / 'desktop-chapter-bank.png'), full_page=True)
         record('Question bank chapter filter, within-chapter numbering, pagination, accent-free search and source answers')
 
