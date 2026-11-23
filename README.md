@@ -22,4 +22,6 @@ Không dùng tài khoản, cookie, localStorage hoặc sessionStorage. Lượt l
 
 `python scripts/verify_lms.py --sources D:/Downloads` kiểm tra đủ 522 vị trí gốc, trạng thái, nguồn/SHA-256, JSON/JS đồng nhất và mẫu bổ sung. Bỏ `--sources` khi không có PDF trên máy.
 
-`python scripts/qa_exam.py [URL]` dùng Playwright/Chrome kiểm tra 430 câu luyện theo chương, 92 câu chờ bổ sung, hiện đáp án sai, chấm điểm, đổi lựa chọn, trộn câu, tự nộp, tìm kiếm, phân trang, tải lại không lưu và giao diện điện thoại. Thư viện chỉ dùng cho kiểm tra. Các script Scribd/Studocu là công cụ cho nguồn cũ, không tái tạo bộ hiện tại.
+`python scripts/qa_exam.py [URL]` dùng Playwright/Chrome kiểm tra 430 câu luyện theo chương, 92 câu chờ bổ sung, hiện đáp án sai, chấm điểm, đổi lựa chọn, trộn câu, tự nộp, tìm kiếm, phân trang, tải lại không lưu và giao diện điện thoại. Thư viện kiểm tra nằm trong `.qa-tools`; kết quả gần nhất nằm trong `.qa-results`. Hai thư mục này được ẩn và không đưa lên GitHub.
+
+Các script cho bộ đề cũ đã chuyển vào `../LUU_TRU_CU/scripts-cu`. Thư mục `scripts` chỉ còn `sync_lms.py`, `verify_lms.py` và `qa_exam.py` cho bộ mới.

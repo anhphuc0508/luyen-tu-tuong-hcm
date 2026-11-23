@@ -7,8 +7,7 @@ import threading
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-ROOT = REPO.parent
-sys.path.insert(0, str(ROOT / '.qa-tools'))
+sys.path.insert(0, str(REPO / '.qa-tools'))
 from playwright.sync_api import sync_playwright, expect
 
 DATA = json.loads((REPO / 'dist/questions.json').read_text(encoding='utf-8'))
@@ -16,7 +15,7 @@ QUESTIONS = {q['id']: q for q in DATA['questions']}
 READY = {i:q for i,q in QUESTIONS.items() if q['status']=='ready'}
 TOTAL = len(QUESTIONS)
 READY_COUNT = len(READY)
-OUT = ROOT / 'extraction/lms/browser-qa'
+OUT = REPO / '.qa-results'
 OUT.mkdir(parents=True, exist_ok=True)
 server = None
 if len(sys.argv) > 1:
