@@ -71,8 +71,6 @@
           <div class="hero-demo-answer"><b>D</b><i></i></div>
         </div>
         <div class="study-book"><div class="book-spine"></div><div class="book-cover"><span class="book-series">TỦ SÁCH ÔN TẬP</span><div class="book-star">✦</div><strong>TƯ TƯỞNG<br>HỒ CHÍ MINH</strong><div class="book-rule"></div><span class="book-subtitle">Hiểu hôm nay.<br>Vững bước ngày mai.</span><span class="book-edition">${questions.length} CÂU HỎI · ${chapters.length} CHƯƠNG</span></div></div>
-        <div class="hero-count-chip">${icon('book')}<span><strong>${questions.length}</strong> câu hỏi<span>Khám phá ${chapters.length} chương kiến thức</span></span></div>
-        <div class="hero-study-note"><span class="hero-note-check">${icon('check')}</span><span>Thêm một câu đúng.<strong>Thêm một chút tự tin.</strong></span></div>
         <span class="hero-spark hero-spark--one">✦</span><span class="hero-spark hero-spark--two">✧</span><span class="hero-spark hero-spark--three">✦</span>
       </div>
     </div>
