@@ -1,0 +1,743 @@
+{
+  "instructions": "Chỉ điền các trường null; đáp án dùng A/B/C/D. Số câu theo từng chương trong PDF.",
+  "corrections": [
+    {
+      "chapterId": 1,
+      "number": 2,
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 1,
+      "number": 6,
+      "options": {
+        "B": null
+      }
+    },
+    {
+      "chapterId": 1,
+      "number": 7,
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 1,
+      "number": 10,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 1,
+      "number": 11,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 1,
+      "number": 13,
+      "options": {
+        "D": null
+      }
+    },
+    {
+      "chapterId": 1,
+      "number": 17,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 1,
+      "number": 18,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 1,
+      "number": 22,
+      "question": null
+    },
+    {
+      "chapterId": 1,
+      "number": 23,
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 1,
+      "number": 25,
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 1,
+      "number": 27,
+      "options": {
+        "C": null
+      }
+    },
+    {
+      "chapterId": 1,
+      "number": 28,
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 1,
+      "number": 30,
+      "options": {
+        "D": null
+      }
+    },
+    {
+      "chapterId": 1,
+      "number": 32,
+      "options": {
+        "D": null
+      }
+    },
+    {
+      "chapterId": 1,
+      "number": 40,
+      "options": {
+        "D": null
+      }
+    },
+    {
+      "chapterId": 1,
+      "number": 44,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 1,
+      "number": 45,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 1,
+      "number": 48,
+      "question": null
+    },
+    {
+      "chapterId": 1,
+      "number": 51,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 1,
+      "number": 52,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 1,
+      "number": 54,
+      "question": null
+    },
+    {
+      "chapterId": 1,
+      "number": 59,
+      "question": null
+    },
+    {
+      "chapterId": 1,
+      "number": 60,
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 1,
+      "number": 66,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 1,
+      "number": 67,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 1,
+      "number": 71,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 1,
+      "number": 72,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 1,
+      "number": 73,
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 1,
+      "number": 75,
+      "question": null
+    },
+    {
+      "chapterId": 1,
+      "number": 82,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 1,
+      "number": 83,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 1,
+      "number": 86,
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 1,
+      "number": 91,
+      "options": {
+        "D": null
+      }
+    },
+    {
+      "chapterId": 3,
+      "number": 50,
+      "question": null
+    },
+    {
+      "chapterId": 3,
+      "number": 68,
+      "options": {
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 3,
+      "number": 124,
+      "options": {
+        "C": null,
+        "D": null
+      }
+    },
+    {
+      "chapterId": 3,
+      "number": 137,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 3,
+      "number": 141,
+      "options": {
+        "B": null
+      }
+    },
+    {
+      "chapterId": 4,
+      "number": 18,
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 4,
+      "number": 29,
+      "question": null
+    },
+    {
+      "chapterId": 4,
+      "number": 30,
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 4,
+      "number": 34,
+      "question": null
+    },
+    {
+      "chapterId": 4,
+      "number": 35,
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 4,
+      "number": 39,
+      "options": {
+        "D": null
+      }
+    },
+    {
+      "chapterId": 4,
+      "number": 43,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 4,
+      "number": 44,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 4,
+      "number": 46,
+      "options": {
+        "B": null,
+        "C": null,
+        "D": null
+      }
+    },
+    {
+      "chapterId": 4,
+      "number": 49,
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 4,
+      "number": 53,
+      "options": {
+        "D": null
+      }
+    },
+    {
+      "chapterId": 4,
+      "number": 55,
+      "options": {
+        "B": null
+      }
+    },
+    {
+      "chapterId": 4,
+      "number": 59,
+      "options": {
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 4,
+      "number": 60,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 4,
+      "number": 62,
+      "options": {
+        "D": null
+      }
+    },
+    {
+      "chapterId": 4,
+      "number": 63,
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 4,
+      "number": 66,
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 4,
+      "number": 68,
+      "options": {
+        "D": null
+      }
+    },
+    {
+      "chapterId": 4,
+      "number": 72,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 4,
+      "number": 73,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 4,
+      "number": 76,
+      "options": {
+        "B": null
+      }
+    },
+    {
+      "chapterId": 4,
+      "number": 79,
+      "options": {
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 4,
+      "number": 83,
+      "question": null
+    },
+    {
+      "chapterId": 4,
+      "number": 85,
+      "question": null
+    },
+    {
+      "chapterId": 4,
+      "number": 86,
+      "options": {
+        "D": null
+      }
+    },
+    {
+      "chapterId": 5,
+      "number": 28,
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 6,
+      "number": 2,
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 6,
+      "number": 4,
+      "options": {
+        "D": null
+      }
+    },
+    {
+      "chapterId": 6,
+      "number": 6,
+      "options": {
+        "B": null
+      }
+    },
+    {
+      "chapterId": 6,
+      "number": 11,
+      "options": {
+        "D": null
+      }
+    },
+    {
+      "chapterId": 6,
+      "number": 15,
+      "options": {
+        "C": null,
+        "D": null
+      }
+    },
+    {
+      "chapterId": 6,
+      "number": 17,
+      "options": {
+        "B": null
+      }
+    },
+    {
+      "chapterId": 6,
+      "number": 19,
+      "options": {
+        "B": null
+      }
+    },
+    {
+      "chapterId": 6,
+      "number": 25,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 6,
+      "number": 26,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 6,
+      "number": 28,
+      "options": {
+        "B": null
+      }
+    },
+    {
+      "chapterId": 6,
+      "number": 30,
+      "options": {
+        "B": null
+      }
+    },
+    {
+      "chapterId": 6,
+      "number": 35,
+      "options": {
+        "C": null,
+        "D": null
+      }
+    },
+    {
+      "chapterId": 6,
+      "number": 37,
+      "options": {
+        "C": null,
+        "D": null
+      }
+    },
+    {
+      "chapterId": 6,
+      "number": 39,
+      "options": {
+        "C": null,
+        "D": null
+      }
+    },
+    {
+      "chapterId": 6,
+      "number": 41,
+      "options": {
+        "B": null
+      }
+    },
+    {
+      "chapterId": 6,
+      "number": 51,
+      "options": {
+        "D": null
+      }
+    },
+    {
+      "chapterId": 6,
+      "number": 55,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 6,
+      "number": 56,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 6,
+      "number": 58,
+      "options": {
+        "D": null
+      }
+    },
+    {
+      "chapterId": 6,
+      "number": 60,
+      "options": {
+        "D": null
+      }
+    },
+    {
+      "chapterId": 6,
+      "number": 62,
+      "options": {
+        "C": null,
+        "D": null
+      }
+    },
+    {
+      "chapterId": 6,
+      "number": 63,
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 6,
+      "number": 67,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 6,
+      "number": 68,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 6,
+      "number": 69,
+      "question": null,
+      "options": {
+        "A": null,
+        "B": null,
+        "C": null,
+        "D": null
+      },
+      "correctAnswer": null
+    },
+    {
+      "chapterId": 6,
+      "number": 72,
+      "options": {
+        "C": null,
+        "D": null
+      }
+    },
+    {
+      "chapterId": 6,
+      "number": 74,
+      "options": {
+        "B": null
+      }
+    }
+  ]
+}

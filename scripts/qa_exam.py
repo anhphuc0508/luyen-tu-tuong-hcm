@@ -13,7 +13,10 @@ from playwright.sync_api import sync_playwright, expect
 
 DATA = json.loads((REPO / 'dist/questions.json').read_text(encoding='utf-8'))
 QUESTIONS = {q['id']: q for q in DATA['questions']}
-OUT = ROOT / 'extraction/studocu/browser-qa'
+READY = {i:q for i,q in QUESTIONS.items() if q['status']=='ready'}
+TOTAL = len(QUESTIONS)
+READY_COUNT = len(READY)
+OUT = ROOT / 'extraction/lms/browser-qa'
 OUT.mkdir(parents=True, exist_ok=True)
 server = None
 if len(sys.argv) > 1:
@@ -49,7 +52,7 @@ def begin(page, mode='practice', chapter='all', count='10', minutes='0', shuffle
     page.locator('[name=shuffle]').set_checked(shuffle)
     page.locator('#exam-setup [type=submit]').click()
     expect(page.locator('body')).to_have_attribute('data-page', 'exam')
-    size = len([q for q in QUESTIONS.values() if chapter == 'all' or q['chapterId'] == int(chapter)]) if count == 'all' else int(count)
+    size = len([q for q in READY.values() if chapter == 'all' or q['chapterId'] == int(chapter)]) if count == 'all' else int(count)
     expect(page.locator('.question-grid button')).to_have_count(size)
     return size
 
@@ -77,15 +80,15 @@ try:
         assert response.status == 200
         expect(page.locator('body')).to_have_attribute('data-page', 'home')
         assert page.locator('[name=mode]:checked').input_value() == 'practice'
-        assert page.locator('#chapter-select option').count() == 6
+        assert page.locator('#chapter-select option').count() == len(DATA['chapters'])+1
         assert page.locator('[name=count]:checked').input_value() == '20'
         assert page.locator('[name=minutes]').is_disabled()
-        assert '427' in page.locator('.header-badge').inner_text()
+        assert str(TOTAL) in page.locator('.header-badge').inner_text()
         assert '349' not in page.locator('body').inner_text()
-        assert page.evaluate('window.QUIZ_DATA.source.year') == 2023
-        assert page.evaluate('window.QUIZ_DATA.questions.length') == 427
+        assert page.evaluate('window.QUIZ_DATA.source.files.length') == 6
+        assert page.evaluate('window.QUIZ_DATA.questions.length') == TOTAL
         page.screenshot(path=str(OUT / 'desktop-home.png'), full_page=True)
-        record('New 427-question bank, five chapters and practice as the default')
+        record(f'New {TOTAL}-question bank, six chapters, {READY_COUNT} ready and practice as the default')
 
         begin(page, chapter='1')
         q = current(page)
@@ -139,22 +142,23 @@ try:
                 page.locator(f'[data-action=jump][data-index="{index}"]').click()
                 question = current(page)
                 assert question['chapterId'] == chapter['id']
-                assert question['number'] == index+1
+                assert question['number'] == [q['number'] for q in READY.values() if q['chapterId']==chapter['id']][index]
+                assert question['status'] == 'ready'
                 chapter_ids.append(question['id'])
             assert len(set(chapter_ids)) == chapter['questionCount']
             visited += chapter_ids
             home(page)
             record(f'Chapter {chapter["id"]}: all {chapter["questionCount"]} source questions in exact chapter order')
-        assert len(visited) == 427 and len(set(visited)) == 427
+        assert len(visited) == READY_COUNT and len(set(visited)) == READY_COUNT
         page.locator('[name=count][value="50"]').check()
-        page.locator('#chapter-select').select_option('4')
+        page.locator('#chapter-select').select_option('5')
         assert page.locator('[name=count][value="50"]').is_disabled()
         assert page.locator('[name=count]:checked').input_value() == 'all'
         begin(page, chapter='all', count='all')
-        page.locator('[data-action=jump][data-index="426"]').click()
-        assert current(page)['id'] == 427
+        page.locator(f'[data-action=jump][data-index="{READY_COUNT-1}"]').click()
+        assert current(page)['id'] == TOTAL
         home(page)
-        record('All 427 new questions reachable; a 44-question chapter rejects an oversized 50-question selection')
+        record(f'All {READY_COUNT} ready questions reachable; pending questions are excluded from scored sessions')
 
         begin(page, mode='exam', chapter='2', count='30', shuffle=True)
         ids = []
@@ -190,9 +194,10 @@ try:
         record('Shuffled chapter exam has unique questions; exam allows changes, hides keys until submission and scores correctly')
 
         page.locator('[data-nav=questions]').click()
-        assert page.locator('#bank-list .bank-card').count() == 12
+        expect(page.locator('body')).to_have_attribute('data-page','questions')
+        expect(page.locator('#bank-list .bank-card')).to_have_count(12)
         page.locator('#bank-chapter').select_option('4')
-        assert page.locator('#search-count').inner_text() == '44 câu hỏi'
+        assert page.locator('#search-count').inner_text() == str(DATA['chapters'][3]['sourceQuestionCount'])+' câu hỏi'
         assert all(QUESTIONS[int(card.get_attribute('data-question-id'))]['chapterId'] == 4 for card in page.locator('.bank-card').all())
         page.locator('[data-action=bank-next]').click()
         assert 'Câu 13' in page.locator('.bank-meta').first.inner_text()
@@ -200,15 +205,32 @@ try:
         page.locator('#bank-search').fill('truyen thong')
         assert page.locator('.bank-card').count() > 0
         page.locator('#bank-search').fill('')
-        page.locator('#bank-chapter').select_option('5')
-        page.locator('#bank-search').fill(QUESTIONS[427]['question'])
+        page.locator('#bank-chapter').select_option('6')
+        page.locator('#bank-search').fill(QUESTIONS[TOTAL]['question'])
         assert page.locator('.bank-card').count() == 1
         assert page.locator('.review-option.correct').count() == 0
         page.locator('#show-answers').check()
         assert page.locator('.review-option.correct').count() == 1
-        assert 'Chương 5' in page.locator('.source-note').inner_text()
+        assert 'Chương 6' in page.locator('.source-note').inner_text()
         page.screenshot(path=str(OUT / 'desktop-chapter-bank.png'), full_page=True)
         record('Question bank chapter filter, within-chapter numbering, pagination, accent-free search and source answers')
+
+        page.locator('#bank-search').fill('')
+        page.locator('#bank-chapter').select_option('all')
+        page.locator('#bank-status').select_option('needs_review')
+        pending_ids=[]
+        while True:
+            cards=page.locator('#bank-list .bank-card')
+            for card in cards.all():
+                qid=int(card.get_attribute('data-question-id'))
+                assert QUESTIONS[qid]['status']=='needs_review'
+                assert card.locator('.pending-details').is_visible()
+                pending_ids.append(qid)
+            nxt=page.locator('[data-action=bank-next]')
+            if not nxt.count() or nxt.is_disabled():break
+            nxt.click()
+        assert set(pending_ids)==set(QUESTIONS)-set(READY)
+        record('Every pending source question is present with missing-field details and no invented answer')
 
         timed = browser.new_context(viewport={'width':1200, 'height':900})
         clock_page = timed.new_page()
@@ -270,7 +292,7 @@ try:
         assert not failures, failures
         record('320px, 768px and 1024px chapter layouts; no JavaScript or CSP errors')
         browser.close()
-    report = {'url':URL, 'sourceQuestions':427, 'chapters':5, 'passed':passed, 'javascriptErrors':errors, 'consoleErrors':failures}
+    report = {'url':URL, 'sourceQuestions':TOTAL, 'readyQuestions':READY_COUNT, 'pendingQuestions':TOTAL-READY_COUNT, 'chapters':6, 'passed':passed, 'javascriptErrors':errors, 'consoleErrors':failures}
     (OUT / ('live-report.json' if len(sys.argv)>1 else 'local-report.json')).write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print(json.dumps(report,ensure_ascii=False,indent=2))
 finally:

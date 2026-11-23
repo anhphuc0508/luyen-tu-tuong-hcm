@@ -1,25 +1,25 @@
 # Ôn Tư tưởng
 
-Trang ôn tập và thi thử Tư tưởng Hồ Chí Minh: 427 câu hỏi mới từ tài liệu năm 2023, chia theo 5 chương. Bộ cũ đã được thay khỏi dữ liệu đang phục vụ.
+Web tại https://luyentthcm.vercel.app/ dùng bộ mới từ **chương 1.pdf đến chương 6.pdf** do người dùng cung cấp. Bộ cũ đã được thay khỏi dữ liệu đang phục vụ.
 
-## Chạy
+## Dữ liệu hiện tại
 
-Mở `dist/index.html`, hoặc chạy `python -m http.server 4173 --directory dist` rồi truy cập `http://localhost:4173`.
+522 vị trí câu hỏi, lần lượt 95, 71, 148, 88, 44 và 76 câu theo tên file. File có đầu đề “Tổng hợp LMS” được xếp vào **chương 1** theo yêu cầu. Giữ số câu trong từng PDF, kể cả các vị trí bị mất chữ.
 
-HTML/CSS/JavaScript thuần, không cần cài thư viện hay chạy build. Không dùng cookie, localStorage, tài khoản hoặc cơ sở dữ liệu. Đáp án và kết quả chỉ tồn tại trong bộ nhớ của trang; tải lại hoặc đóng trang kết thúc lượt làm bài. Đánh dấu câu chỉ áp dụng trong lượt hiện tại.
+PDF là ảnh chụp dài, có quảng cáo đè chữ, đoạn ghép ảnh mất nội dung và khung chưa tải chữ. OCR thực hiện cục bộ bằng PyMuPDF/Tesseract tiếng Việt; các vùng khó đọc được đối chiếu với ảnh. Đáp án theo nhãn đỏ “Đáp án đúng” trong file mới. Không lấy đáp án cũ điền vào chỗ thiếu. Các thay đổi chuẩn hoá chữ đọc được lưu tại `data/lms/ocr-normalizations.json`; bản chép tay đã xem ảnh nằm tại `data/lms/manual_fixes.py`.
 
-Ôn tập hiện đáp án đúng ngay sau lần chọn đầu tiên, đánh dấu riêng câu trả lời sai và khóa lựa chọn để điểm phản ánh lần trả lời đầu. Thi thử cho phép đổi đáp án, tùy chọn giới hạn thời gian, tự nộp khi hết giờ và hiện đáp án khi kết thúc. Cả hai chế độ đều chọn được một chương hoặc toàn bộ 5 chương.
+430 câu đủ dữ liệu để luyện; 92 câu chờ bổ sung. Chỉ `status: ready` được chọn vào lượt ôn/thi. `needs_review` vẫn xuất hiện trong bộ câu hỏi với phần thiếu ghi rõ; `correctAnswers: []` khi chưa đọc được đáp án. Lựa chọn bị mất giữ chuỗi rỗng. Tên file, trang nguồn, tọa độ dọc ảnh và SHA-256 của 6 PDF được lưu để đối chiếu. Hồ sơ nhập ban đầu: `data/lms/source-audit.json`.
 
-## Vercel
+`dist/can-bo-sung.txt` là danh sách dễ đọc; `dist/mau-bo-sung.json` là mẫu điền các trường còn thiếu. Cả hai có liên kết trong web. Khi bổ sung, sửa `dist/questions.json`, lưu nguồn xác nhận trong `answerEvidence`, xoá đúng các mục đã xử lý trong `issues`, rồi chạy `python scripts/sync_lms.py` để cập nhật dữ liệu trình duyệt, số lượng và danh sách thiếu. Giữ các mục `issues` chưa xử lý.
 
-Repo GitHub đã được kết nối với dự án Vercel. Push vào `main` sẽ tạo bản triển khai mới. Cấu hình `vercel.json` chọn preset Other, bỏ qua cài đặt/build và xuất bản `dist`. URL chính: https://luyentthcm.vercel.app/.
+## Chạy và triển khai
 
-## Dữ liệu và kiểm tra
+HTML/CSS/JavaScript thuần, không cần build. Mở `dist/index.html` hoặc chạy `python -m http.server 4173 --directory dist`. Vercel kết nối GitHub và xuất bản `dist` khi push `main`.
 
-`dist/questions.json` chứa 427 câu, 1.708 lựa chọn và metadata 5 chương. Mỗi câu có `id` duy nhất, `chapterId`, `number` là số câu trong chương, `sourcePages`, `correctAnswers` và `answerEvidence` trỏ tới trang bảng đáp án. `questions.js` là bản dữ liệu dùng trực tiếp trong trình duyệt. Các chương lần lượt có 71, 148, 88, 44 và 76 câu.
+Không dùng tài khoản, cookie, localStorage hoặc sessionStorage. Lượt làm bài kết thúc khi tải lại trang. Ôn tập hiện đầy đủ đáp án đúng sau lần chọn đầu tiên, đánh dấu sai và khóa lựa chọn. Thi thử cho đổi đáp án trước khi nộp, hỗ trợ hẹn giờ và tự nộp. Cả hai chọn được từng chương hoặc toàn bộ câu đủ dữ liệu.
 
-`scripts/extract_studocu.py --write` tái tạo dữ liệu từ file PDF Studocu năm 2023 do người dùng cung cấp. Ký tự được sắp theo tọa độ vì thứ tự vẽ trong PDF làm tách một số từ và số câu. Đáp án ghép theo chương và số câu từ bảng Gợi ý đáp án; không suy đoán theo kiến thức bên ngoài. `scripts/verify_studocu.py` đối chiếu 427 đáp án bằng pypdf và kiểm tra toàn bộ ký tự ở 94 trang. Cần PyMuPDF cho trích xuất, pypdf cho đối chiếu.
+## Kiểm tra
 
-Lỗi nhãn đã đối chiếu hình PDF: chương 1 câu 27 ghi hai nhãn C. Nhãn lựa chọn thứ tư được chuẩn hóa thành D, lưu `sourceLabel: "C"` và ghi chú trong JSON; nội dung cùng đáp án A không đổi. Khoảng trắng giữa nhãn D và dấu chấm ở câu 49 được chuẩn hóa. Giữ nguyên thứ tự A–D vì có lựa chọn tham chiếu các đáp án khác.
+`python scripts/verify_lms.py --sources D:/Downloads` kiểm tra đủ 522 vị trí gốc, trạng thái, nguồn/SHA-256, JSON/JS đồng nhất và mẫu bổ sung. Bỏ `--sources` khi không có PDF trên máy.
 
-`scripts/qa_exam.py` kiểm tra luồng thi thật trong Chrome bằng Playwright, gồm chấm điểm, thay đổi đáp án, tự nộp khi hết giờ, tải lại không giữ tiến trình và kích thước màn hình điện thoại. Có thể truyền URL bản deploy làm đối số đầu tiên. Playwright chỉ cần cho bước kiểm tra, không tham gia triển khai.
+`python scripts/qa_exam.py [URL]` dùng Playwright/Chrome kiểm tra 430 câu luyện theo chương, 92 câu chờ bổ sung, hiện đáp án sai, chấm điểm, đổi lựa chọn, trộn câu, tự nộp, tìm kiếm, phân trang, tải lại không lưu và giao diện điện thoại. Thư viện chỉ dùng cho kiểm tra. Các script Scribd/Studocu là công cụ cho nguồn cũ, không tái tạo bộ hiện tại.
