@@ -8600,5 +8600,59 @@
         "pendingCount": 0
       }
     ]
-  }
+  },
+  "userCorrections": [
+    {
+      "date": "2026-11-23",
+      "inputFile": "BAN_MOI_6_CHUONG/questions.json",
+      "inputSha256": "f2527d4e297701b1a024cf4c3fa2c167efc538358813e6be9e3458f819e23e1d",
+      "method": "User supplied missing text in the exported JSON; answer keys unchanged. Only resolved issue fields were removed.",
+      "corrections": [
+        {
+          "chapterId": 1,
+          "number": 53,
+          "fields": [
+            {
+              "field": "D",
+              "before": "",
+              "after": "Quan tâm đến đời sống nhân dân"
+            }
+          ]
+        },
+        {
+          "chapterId": 1,
+          "number": 57,
+          "fields": [
+            {
+              "field": "question",
+              "before": "",
+              "after": "Đâu là những nguyên tắc xây dựng Đảng Cộng sản Việt Nam theo tư tưởng Hồ Chí Minh?:"
+            }
+          ]
+        },
+        {
+          "chapterId": 1,
+          "number": 87,
+          "fields": [
+            {
+              "field": "C",
+              "before": "",
+              "after": "Văn hóa không có quan hệ với chính trị"
+            },
+            {
+              "field": "D",
+              "before": "",
+              "after": "Cả 3 đáp án đều sai"
+            }
+          ]
+        }
+      ],
+      "result": {
+        "ready": 491,
+        "pending": 31,
+        "chapter1Ready": 95,
+        "chapter1Pending": 0
+      }
+    }
+  ]
 }

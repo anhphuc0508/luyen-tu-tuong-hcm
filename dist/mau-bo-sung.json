@@ -2,26 +2,6 @@
   "instructions": "Chỉ điền các trường null; đáp án dùng A/B/C/D. Số câu theo từng chương trong PDF.",
   "corrections": [
     {
-      "chapterId": 1,
-      "number": 53,
-      "options": {
-        "D": null
-      }
-    },
-    {
-      "chapterId": 1,
-      "number": 57,
-      "question": null
-    },
-    {
-      "chapterId": 1,
-      "number": 87,
-      "options": {
-        "C": null,
-        "D": null
-      }
-    },
-    {
       "chapterId": 3,
       "number": 50,
       "question": null

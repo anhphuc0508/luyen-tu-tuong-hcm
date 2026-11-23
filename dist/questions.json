@@ -53,15 +53,15 @@
     "latestUpdate": "2026-11-23"
   },
   "totalQuestions": 522,
-  "readyQuestions": 488,
-  "pendingQuestions": 34,
+  "readyQuestions": 491,
+  "pendingQuestions": 31,
   "chapters": [
     {
       "id": 1,
       "title": "Tổng hợp LMS",
       "sourceQuestionCount": 95,
-      "questionCount": 92,
-      "pendingCount": 3,
+      "questionCount": 95,
+      "pendingCount": 0,
       "sourceFile": "chương 1.pdf"
     },
     {
@@ -2361,7 +2361,7 @@
         },
         {
           "id": "D",
-          "text": ""
+          "text": "Quan tâm đến đời sống nhân dân"
         }
       ],
       "sourceFile": "chương 1.pdf",
@@ -2380,14 +2380,16 @@
         "y": 18876,
         "sourceSha256": "40165491ea29b3727569e782c0d35441d1925eee4c01ef7957b77d5a124bf4d1"
       },
-      "issues": [
+      "issues": [],
+      "status": "ready",
+      "sourceQuestionId": "367853635",
+      "contentEvidence": [
         {
           "field": "D",
-          "message": "Phần trên của lựa chọn D bị cắt ở đoạn nối ảnh trong bản PDF mới."
+          "method": "user_supplied",
+          "date": "2026-11-23"
         }
-      ],
-      "status": "needs_review",
-      "sourceQuestionId": "367853635"
+      ]
     },
     {
       "id": 54,
@@ -2522,7 +2524,7 @@
       "id": 57,
       "chapterId": 1,
       "number": 57,
-      "question": "",
+      "question": "Đâu là những nguyên tắc xây dựng Đảng Cộng sản Việt Nam theo tư tưởng Hồ Chí Minh?:",
       "options": [
         {
           "id": "A",
@@ -2557,13 +2559,15 @@
         "y": 20284,
         "sourceSha256": "40165491ea29b3727569e782c0d35441d1925eee4c01ef7957b77d5a124bf4d1"
       },
-      "issues": [
+      "issues": [],
+      "status": "ready",
+      "contentEvidence": [
         {
           "field": "question",
-          "message": "Nội dung câu hỏi bị che bởi khung xám trong bản PDF mới."
+          "method": "user_supplied",
+          "date": "2026-11-23"
         }
-      ],
-      "status": "needs_review"
+      ]
     },
     {
       "id": 58,
@@ -3837,11 +3841,11 @@
         },
         {
           "id": "C",
-          "text": ""
+          "text": "Văn hóa không có quan hệ với chính trị"
         },
         {
           "id": "D",
-          "text": ""
+          "text": "Cả 3 đáp án đều sai"
         }
       ],
       "sourceFile": "chương 1.pdf",
@@ -3860,17 +3864,20 @@
         "y": 31186,
         "sourceSha256": "40165491ea29b3727569e782c0d35441d1925eee4c01ef7957b77d5a124bf4d1"
       },
-      "issues": [
+      "issues": [],
+      "status": "ready",
+      "contentEvidence": [
         {
           "field": "C",
-          "message": "Lựa chọn C bị mất ở đoạn nối ảnh trong bản PDF mới."
+          "method": "user_supplied",
+          "date": "2026-11-23"
         },
         {
           "field": "D",
-          "message": "Lựa chọn D bị mất ở đoạn nối ảnh trong bản PDF mới."
+          "method": "user_supplied",
+          "date": "2026-11-23"
         }
-      ],
-      "status": "needs_review"
+      ]
     },
     {
       "id": 88,
